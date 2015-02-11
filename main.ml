@@ -1,4 +1,4 @@
-module Formula = Formula.Make(Literal)
+module Formula = Formula.S
 module Solver = Solver.Make(Formula)
 
 let usage_msg = "Usage: ./resol <options> input_file <output_file>"

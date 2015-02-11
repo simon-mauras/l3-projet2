@@ -1,8 +1,8 @@
 open Types
 
-module Make (L : Literal_type) : Formula_type =
+module S : Formula_type =
   struct
-    type t = L.t list list
+    type t = Literal.t list list ref
     
     let make out (nb_vars, nb_clauses, clauses) =
       (* Check: number of variables *)
@@ -29,13 +29,21 @@ module Make (L : Literal_type) : Formula_type =
         output_string out " expected).\n";
       end;
       (* Return *)
-      List.map (List.map L.make) clauses
+      ref (List.map (List.map Literal.make) clauses)
     
     let print out clauses =
       let rec print_clause = function
         | [] -> ()
-        | x::[] -> L.print out x;
-        | x::l -> L.print out x; output_string out " & "; print_clause l in
-      List.iter (fun l -> print_clause l; output_string out "\n") clauses
+        | x::[] -> Literal.print out x;
+        | x::l -> Literal.print out x; output_string out " & "; print_clause l in
+      List.iter (fun l -> print_clause l; output_string out "\n") !clauses
     
+    let setLiteral x clauses = ()
+    let forgetLiteral x clauses = ()
+    
+    let isFalse clauses = false
+    let getUnitClause clauses = None
+    let getPureLiteral clauses = None
+    let getFreeLiteral clauses = None
+     
   end

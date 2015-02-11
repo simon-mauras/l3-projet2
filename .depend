@@ -1,12 +1,14 @@
 parser.cmi :
-formula.cmo : types.cmo
-formula.cmx : types.cmx
+dpll.cmo : types.cmo
+dpll.cmx : types.cmx
+formula.cmo : types.cmo literal.cmo
+formula.cmx : types.cmx literal.cmx
 lexer.cmo : parser.cmi
 lexer.cmx : parser.cmx
 literal.cmo :
 literal.cmx :
-main.cmo : solver.cmo parser.cmi literal.cmo lexer.cmo formula.cmo
-main.cmx : solver.cmx parser.cmx literal.cmx lexer.cmx formula.cmx
+main.cmo : solver.cmo parser.cmi lexer.cmo formula.cmo
+main.cmx : solver.cmx parser.cmx lexer.cmx formula.cmx
 parser.cmo : parser.cmi
 parser.cmx : parser.cmi
 solver.cmo : types.cmo
