@@ -1,7 +1,3 @@
-%{
-open Expr
-%}
-
 %token <int> INT
 %token END
 %token EOF
@@ -9,11 +5,11 @@ open Expr
 %token CNF
 
 %start formula
-%type <Expr.formula> formula
+%type <int * int * int list list> formula
 %%
 
 formula:
-  | P CNF INT INT cnf       { Cnf($3, $4, $5) }
+  | P CNF INT INT cnf       { ($3, $4, $5) }
 ;
 
 cnf:
@@ -23,5 +19,5 @@ cnf:
 
 clause:
   | END                     { [] }
-  | INT clause              { (if $1 > 0 then X($1) else Xbar(-$1))::$2 }
+  | INT clause              { $1::$2 }
 ;

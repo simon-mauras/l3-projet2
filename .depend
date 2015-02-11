@@ -1,9 +1,13 @@
-parser.cmi : expr.cmo
-expr.cmo :
-expr.cmx :
+parser.cmi :
+formula.cmo : types.cmo
+formula.cmx : types.cmx
 lexer.cmo : parser.cmi
 lexer.cmx : parser.cmx
-main.cmo : parser.cmi lexer.cmo expr.cmo
-main.cmx : parser.cmx lexer.cmx expr.cmx
-parser.cmo : expr.cmo parser.cmi
-parser.cmx : expr.cmx parser.cmi
+literal.cmo :
+literal.cmx :
+main.cmo : parser.cmi literal.cmo lexer.cmo formula.cmo
+main.cmx : parser.cmx literal.cmx lexer.cmx formula.cmx
+parser.cmo : parser.cmi
+parser.cmx : parser.cmi
+types.cmo :
+types.cmx :

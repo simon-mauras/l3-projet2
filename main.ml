@@ -1,4 +1,4 @@
-open Expr
+module Formula = Formula.Make(Literal)
 
 let usage_msg = "Usage: ./resol <options> input_file <output_file>"
 let version = "SAT-solver v0.1"
@@ -32,8 +32,8 @@ let main () =
                        then open_out !arg_output
                        else stdout in
         let lexbuf = Lexing.from_channel input in
-        let form = check_formula (parse lexbuf) in
-        output_string output "Done !\n"
+        let form = Formula.make stderr (parse lexbuf) in
+        Formula.print output form
       with
         | Sys_error s -> prerr_endline s (* no such file or directory, ... *)
     end
