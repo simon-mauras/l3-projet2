@@ -1,4 +1,5 @@
 module Formula = Formula.Make(Literal)
+module Solver = Solver.Make(Formula)
 
 let usage_msg = "Usage: ./resol <options> input_file <output_file>"
 let version = "SAT-solver v0.1"
@@ -33,7 +34,11 @@ let main () =
                        else stdout in
         let lexbuf = Lexing.from_channel input in
         let form = Formula.make stderr (parse lexbuf) in
-        Formula.print output form
+        Formula.print output form;
+        let s = Solver.solve stderr form in
+        match s with
+          | None -> output_string output "s UNSATISFIABLE\n"
+          | Some l -> output_string output "s SATISFIABLE\n"
       with
         | Sys_error s -> prerr_endline s (* no such file or directory, ... *)
     end

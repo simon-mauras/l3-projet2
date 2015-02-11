@@ -66,7 +66,7 @@
 #
 # The Caml sources (including camlyacc and camllex source files)
 
-SOURCES = lexer.mll parser.mly types.ml literal.ml formula.ml main.ml
+SOURCES = lexer.mll parser.mly types.ml literal.ml formula.ml solver.ml main.ml
 
 # The executable file to generate
 

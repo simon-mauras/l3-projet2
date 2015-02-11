@@ -13,3 +13,12 @@ module type Formula_type =
     val make: out_channel -> int * int * int list list -> t
     val print: out_channel -> t -> unit
   end
+
+type certificate = int list
+type solution = certificate option
+
+module type Solver_type =
+  functor (F : Formula_type) ->
+    sig
+      val solve: out_channel -> F.t -> solution
+    end
