@@ -5,11 +5,9 @@ formula.cmo : types.cmo
 formula.cmx : types.cmx
 lexer.cmo : parser.cmi
 lexer.cmx : parser.cmx
-main.cmo : solver.cmo parser.cmi lexer.cmo formula.cmo
-main.cmx : solver.cmx parser.cmx lexer.cmx formula.cmx
+main.cmo : parser.cmi lexer.cmo formula.cmo dpll.cmo
+main.cmx : parser.cmx lexer.cmx formula.cmx dpll.cmx
 parser.cmo : parser.cmi
 parser.cmx : parser.cmi
-solver.cmo : types.cmo
-solver.cmx : types.cmx
 types.cmo :
 types.cmx :

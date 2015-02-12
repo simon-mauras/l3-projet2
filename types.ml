@@ -30,6 +30,7 @@ module type Formula_type =
     val forgetLiteral: Literal.t -> t -> unit
     
     val isFalse: t -> bool
+    val isTrue: t -> bool
     val getUnitClause: t -> Literal.t option
     val getPureLiteral: t -> Literal.t option
     val getFreeLiteral: t -> Literal.t option 

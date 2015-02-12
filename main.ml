@@ -1,5 +1,5 @@
 module Formula = Formula.S
-module Solver = Solver.Make(Formula)
+module Solver = Dpll.Make(Formula)
 
 let usage_msg = "Usage: ./resol <options> input_file <output_file>"
 let version = "SAT-solver v0.1"
@@ -34,7 +34,6 @@ let main () =
                        else stdout in
         let lexbuf = Lexing.from_channel input in
         let form = Formula.make stderr (parse lexbuf) in
-        Formula.print output form;
         let s = Solver.solve stderr form in
         match s with
           | None -> output_string output "s UNSATISFIABLE\n"

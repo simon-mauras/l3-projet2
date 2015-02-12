@@ -2,8 +2,13 @@ open Types
 
 module S : Formula_type =
   struct
-    type t = Literal.t list list ref
+  
+    module LiteralSet = Set.Make(Literal)
+  
+    (* Number of literal with a true value // Literals which allready have a value // Literals with no value *)
+    type t = (int * LiteralSet.t * LiteralSet.t) array
     
+    (* Create formula with data from Lexing/Parsing *)
     let make out (nb_vars, nb_clauses, clauses) =
       (* Check: number of variables *)
       let max0 x = abs x in
@@ -29,21 +34,52 @@ module S : Formula_type =
         output_string out " expected).\n";
       end;
       (* Return *)
-      ref (List.map (List.map Literal.make) clauses)
+      let res = Array.make c (0, LiteralSet.empty, LiteralSet.empty) in
+      List.iteri (fun i x -> res.(i) <- (0, LiteralSet.empty,
+                                            List.fold_left (fun x y -> LiteralSet.add y x)
+                                                           LiteralSet.empty
+                                                           (List.map Literal.make x)))
+                 clauses;
+      res
     
+    (* Print formula on output "out" *)
     let print out clauses =
-      let rec print_clause = function
-        | [] -> ()
-        | x::[] -> Literal.print out x;
-        | x::l -> Literal.print out x; output_string out " & "; print_clause l in
-      List.iter (fun l -> print_clause l; output_string out "\n") !clauses
+      Array.iter (fun (n,u,v)-> output_string out (string_of_int n);
+                                LiteralSet.iter (fun x -> output_string out " "; Literal.print out x) u;
+                                output_string out " //";
+                                LiteralSet.iter (fun x -> output_string out " "; Literal.print out x) v;
+                                output_string out "\n") clauses
     
-    let setLiteral x clauses = ()
-    let forgetLiteral x clauses = ()
+    let setLiteral x form =
+      for i = 0 to (Array.length form) - 1 do
+        let n, u, v = form.(i) in
+        if LiteralSet.mem x v
+          then form.(i) <- (n+1, LiteralSet.add x u, LiteralSet.remove x v);
+        if LiteralSet.mem (Literal.neg x) v
+          then form.(i) <- (n, LiteralSet.add (Literal.neg x) u, LiteralSet.remove (Literal.neg x) v);
+      done
     
-    let isFalse clauses = false
-    let getUnitClause clauses = None
-    let getPureLiteral clauses = None
-    let getFreeLiteral clauses = None
+    let forgetLiteral x form =
+      for i = 0 to (Array.length form) - 1 do
+        let n, u, v = form.(i) in
+        if LiteralSet.mem x u
+          then form.(i) <- (n-1, LiteralSet.remove x u, LiteralSet.add x v);
+        if LiteralSet.mem (Literal.neg x) u
+          then form.(i) <- (n, LiteralSet.remove (Literal.neg x) u, LiteralSet.add (Literal.neg x) v);
+      done
+    
+    let isFalse form = Array.fold_left (fun b (n,_,u) -> b || (n = 0 && u = LiteralSet.empty)) false form 
+    
+    let isTrue form = Array.fold_left (fun b (n,_,_) -> b && n > 0) true form
+    
+    let getUnitClause form = Array.fold_left (fun res (n,_,v) -> if n = 0 && LiteralSet.cardinal v = 1
+                                                                   then Some (LiteralSet.min_elt v)
+                                                                   else res) None form
+    
+    let getPureLiteral form = None
+    
+    let getFreeLiteral form = Array.fold_left (fun res (_,_,v) -> if LiteralSet.is_empty v
+                                                                    then res
+                                                                    else Some (LiteralSet.min_elt v)) None form
      
   end
