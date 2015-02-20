@@ -1,0 +1,7 @@
+PKG core
+S src/
+
+B _build/
+B _build/lib/
+B _build/src/
+PKG lexer

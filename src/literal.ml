@@ -1,4 +1,4 @@
-module Literal =
+module Make: Sigs.Literal =
   struct
     (* Type of a literal *)
     type t = X of int | Xbar of int

@@ -1,4 +1,4 @@
-module Formula = Formula.S
+module Formula = Formula.Make (Literal.Make)
 module Solver = Dpll.Make(Formula)
 
 let usage_msg = "Usage: ./resol <options> input_file <output_file>"
@@ -42,4 +42,4 @@ let main () =
         | Sys_error s -> prerr_endline s (* no such file or directory, ... *)
     end
  
-let _ = main ()
+  let _ = main ()

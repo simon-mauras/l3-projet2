@@ -18,6 +18,7 @@ module type Formula_type =
 sig
   type t
   module Literal : Literal
+
   val make: out_channel -> cnf -> t
   val print: out_channel -> t -> unit
 
@@ -30,7 +31,6 @@ sig
   val getPureLiteral: t -> Literal.t option
   val getFreeLiteral: t -> Literal.t option 
 end
-
 
 module type Solver_type =
   functor (F : Formula_type) ->
