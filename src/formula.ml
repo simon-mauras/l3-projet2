@@ -57,6 +57,7 @@ struct
                  output_string out " //";
                  LiteralSet.iter (fun x -> output_string out " "; Literal.print out x) v;
                  output_string out "\n") tabClauses
+
   let setLiteral x (tabClauses, tabLiterals) =
     let decr z =
       let state, nb, lst = tabLiterals.(Literal.id_of_literal z) in
