@@ -1,15 +1,17 @@
 module Formula = Formula.Make (Literal.Make)
+module Formula_wl = Formula_wl.Make (Literal.Make)
 module Solver = Dpll.Make(Formula)
+module Solver_wl = Dpll.Make(Formula_wl)
 
 let usage_msg = "Usage: ./resol <options> input_file <output_file>"
 let version = "SAT-solver v0.1"
 
-let arg_opt = ref false
 let arg_debug = ref false
+let arg_wl = ref false
 let arg_input = ref ""
 let arg_output = ref ""
 
-let doc = [("-opt", Arg.Set arg_opt, "Use optimisations to compute satisfiability");
+let doc = [("-wl", Arg.Set arg_wl, "Use watched literals to compute satisfiability");
            ("-debug", Arg.Set arg_debug, "Print debug informations");
            ("-version", Arg.Unit (fun () -> print_endline version; exit 0), "Print version and exit")]
 
@@ -33,8 +35,16 @@ let main () =
                        then open_out !arg_output
                        else stdout in
         let lexbuf = Lexing.from_channel input in
-        let form = Formula.make stderr (parse lexbuf) in
-        let s = Solver.solve stderr form in
+        
+        let s = if !arg_wl then
+          let form = Formula_wl.make stderr (parse lexbuf) in
+          let _ = if !arg_debug then Formula_wl.print stderr form in
+          Solver_wl.solve stderr form
+        else
+          let form = Formula.make stderr (parse lexbuf) in
+          let _ = if !arg_debug then Formula.print stderr form in
+          Solver.solve stderr form in
+          
         match s with
           | None -> output_string output "s UNSATISFIABLE\n"
           | Some l -> output_string output "s SATISFIABLE\n"
