@@ -1,6 +1,6 @@
 CC := ocamlbuild
 SRC := src
-CFLAGS := -use-ocamlfind -tag thread -r -I $(SRC)
+CFLAGS := -tag thread -r -I $(SRC)
 
 .PHONY: all mproper
 
