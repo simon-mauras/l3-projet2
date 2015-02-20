@@ -8,7 +8,19 @@ struct
   (* A literal can be True, False or Undefined.*)
   type literal_state = True | False | Undefined
 
-  (* Number of literal with a true value // Literals which allready have a value // Literals with no value *)
+  (* The first array contains the clauses:
+         The first element is the number of literals that makes one clause true.
+         The second element is a set containing the literals that appear in the
+         clause which already have a value (True or False).
+         The third element is a set containing the literals that appear in the
+         clause which are Undefined.
+     The second array contains the literals:
+        The first element is the state of a literal.
+        The second element is the number of unsatisfied clauses in which a
+        the literal appears.
+        The third element is a list of the indices of the clauses containing
+        the literal.
+  *)
   type t = (int * LiteralSet.t * LiteralSet.t) array * (literal_state * int * int list) array
 
   (* Create formula with data from Lexing/Parsing *)
