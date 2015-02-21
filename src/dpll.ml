@@ -27,8 +27,6 @@ module Make : Sigs.Solver_type =
             in
             unstack()
           end
-        else if Formula.isTrue form then
-          continue := false
         else
           begin
             (* First, simplify the formula *)
@@ -50,7 +48,7 @@ module Make : Sigs.Solver_type =
             (* Bet on a literal if there is no modification *)
             if not !modif then
               (match Formula.getFreeLiteral form with
-               | None -> failwith "Erreur !!"
+               | None -> continue := false (* La formule est satisfaite *)
                | Some x ->
                  Formula.setLiteral x form;
                  Stack.push (Bet x) stack);

@@ -1,5 +1,5 @@
-(* module Make : functor (L : Sigs.Literal) -> Sigs.Formula_type *)
-module Make (L: Sigs.Literal) : Sigs.Formula_type =
+(* module Make : functor (L : Sigs.Literal_type) -> Sigs.Formula_type *)
+module Make (L: Sigs.Literal_type) : Sigs.Formula_type =
 struct
 
   module Literal = L
@@ -18,33 +18,7 @@ struct
 
   (* Create formula with data from Lexing/Parsing *)
   let make out (nb_vars, nb_clauses, clauses) =
-    (* Check: number of variables *)
-    let max0 x = abs x in
-    let rec max1 = function
-      | [] -> 0 | x::l -> max (max0 x) (max1 l) in
-    let rec max2 = function
-      | [] -> 0 | x::l -> max (max1 x) (max2 l) in
-    let max_vars = max2 clauses in
-    let v = max max_vars nb_vars in
-    if max_vars > nb_vars then begin
-      output_string out "Warning: variable ids are expected to be between 1 and ";
-      output_string out (string_of_int nb_vars);
-      output_string out " (X";
-      output_string out (string_of_int max_vars);
-      output_string out " found).\n";
-    end;
-    (* Check: number of clauses *)
-    let c = List.length clauses in
-    if c <> nb_clauses then begin
-      output_string out "Warning: wrong number of clauses (";
-      output_string out (string_of_int c);
-      output_string out " found, ";
-      output_string out (string_of_int nb_clauses);
-      output_string out " expected).\n";
-    end;
-    
-    (* Return *)
-    let nbOccur = Array.make (2*v) 0 in
+    let nbOccur = Array.make (2*nb_vars) 0 in
     let rec literalList = function
       | 0 -> []
       | n -> (Literal.make n)::(literalList (n-1)) in
@@ -53,9 +27,9 @@ struct
       let vy = nbOccur.(Literal.id_of_literal y) + nbOccur.(Literal.id_of_literal (Literal.neg y)) in
       vy - vx in
     
-    let watchedLiterals = Array.make (2*v) [] in
+    let watchedLiterals = Array.make (2*nb_vars) [] in
     
-    let tabLiterals = Array.make (2*v) false in
+    let tabLiterals = Array.make (2*nb_vars) false in
     
     let answers = {
       unitClauses = [];
@@ -78,7 +52,7 @@ struct
                                                                        (lst, Some x, Some y))
                                                clauses) in
                                                
-    answers.freeLiterals <- List.sort compare (literalList v);
+    answers.freeLiterals <- List.sort compare (literalList nb_vars);
     
     (tabClauses, watchedLiterals, tabLiterals, answers)
     

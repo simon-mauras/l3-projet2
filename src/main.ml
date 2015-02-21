@@ -35,13 +35,14 @@ let main () =
                        then open_out !arg_output
                        else stdout in
         let lexbuf = Lexing.from_channel input in
+        let data = Checker.check stderr (parse lexbuf) in
         
         let s = if !arg_wl then
-          let form = Formula_wl.make stderr (parse lexbuf) in
+          let form = Formula_wl.make stderr data in
           let _ = if !arg_debug then Formula_wl.print stderr form in
           Solver_wl.solve stderr form
         else
-          let form = Formula.make stderr (parse lexbuf) in
+          let form = Formula.make stderr data in
           let _ = if !arg_debug then Formula.print stderr form in
           Solver.solve stderr form in
           

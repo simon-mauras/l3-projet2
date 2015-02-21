@@ -1,5 +1,5 @@
-(* module Make : functor (L : Sigs.Literal) -> Sigs.Formula_type *)
-module Make (L: Sigs.Literal) : Sigs.Formula_type =
+(* module Make : functor (L : Sigs.Literal_type) -> Sigs.Formula_type *)
+module Make (L: Sigs.Literal_type) : Sigs.Formula_type =
 struct
 
   module Literal = L
@@ -25,33 +25,8 @@ struct
 
   (* Create formula with data from Lexing/Parsing *)
   let make out (nb_vars, nb_clauses, clauses) =
-    (* Check: number of variables *)
-    let max0 x = abs x in
-    let rec max1 = function
-      | [] -> 0 | x::l -> max (max0 x) (max1 l) in
-    let rec max2 = function
-      | [] -> 0 | x::l -> max (max1 x) (max2 l) in
-    let max_vars = max2 clauses in
-    let v = max max_vars nb_vars in
-    if max_vars > nb_vars then begin
-      output_string out "Warning: variable ids are expected to be between 1 and ";
-      output_string out (string_of_int nb_vars);
-      output_string out " (X";
-      output_string out (string_of_int max_vars);
-      output_string out " found).\n";
-    end;
-    (* Check: number of clauses *)
-    let c = List.length clauses in
-    if c <> nb_clauses then begin
-      output_string out "Warning: wrong number of clauses (";
-      output_string out (string_of_int c);
-      output_string out " found, ";
-      output_string out (string_of_int nb_clauses);
-      output_string out " expected).\n";
-    end;
-    (* Return *)
-    let tabLiterals = Array.make (2*v) (Undefined, 0, []) in
-    let tabClauses = Array.make c (0, LiteralSet.empty, LiteralSet.empty) in
+    let tabLiterals = Array.make (2*nb_vars) (Undefined, 0, []) in
+    let tabClauses = Array.make nb_clauses (0, LiteralSet.empty, LiteralSet.empty) in
     List.iteri (fun i x -> tabClauses.(i) <- (0, LiteralSet.empty,
                                               List.fold_left (fun x y -> let id = Literal.id_of_literal y in
                                                                let _,nb,l = tabLiterals.(id) in
@@ -59,7 +34,7 @@ struct
                                                                LiteralSet.add y x)
                                                 LiteralSet.empty
                                                 (List.map Literal.make x)))
-      clauses;
+               clauses;
     (tabClauses, tabLiterals)
 
   (* Print formula on output "out" *)
