@@ -4,6 +4,17 @@ module Make : Sigs.Solver_type =
     module Literal = Formula.Literal    
     type assertion = Bet of Literal.t | Deduction of Literal.t
 
+    let getSolution stack =
+      let compare a b = (abs a) - (abs b) in
+      let to_int = function
+        | Bet x -> Literal.to_int x
+        | Deduction x -> Literal.to_int x in
+      let rec to_list s = if Stack.is_empty s
+        then []
+        else let a = Stack.pop s in (to_int a)::(to_list s) in
+      let l = to_list stack in
+      if l = [] then None else Some (List.sort compare l)
+
     let solve out form =
       let stack = Stack.create () in
       let continue = ref true in
@@ -54,5 +65,5 @@ module Make : Sigs.Solver_type =
                  Stack.push (Bet x) stack);
           end
       done;
-      if Stack.is_empty stack then None else Some []
+      getSolution stack
   end

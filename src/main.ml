@@ -48,7 +48,9 @@ let main () =
           
         match s with
           | None -> output_string output "s UNSATISFIABLE\n"
-          | Some l -> output_string output "s SATISFIABLE\n"
+          | Some l -> output_string output "s SATISFIABLE\n";
+                      List.iter (Printf.fprintf output "%d ") l;
+                      Printf.fprintf output "0\n"
       with
         | Sys_error s -> prerr_endline s (* no such file or directory, ... *)
     end

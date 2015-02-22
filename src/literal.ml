@@ -3,11 +3,17 @@
 (** Module de type Literal_type *)
 module Make: Sigs.Literal_type =
   struct
+  
     (** Type d'un literal *)
     type t = X of int | Xbar of int
     
     (** Construit un litéral (de type t) à partir d'un entier (Format DIMACS CNF) *)
     let make x = if x < 0 then Xbar(-x) else X(x)
+    
+    (** Renvoie un entier représentant le litéral (au format DIMACS CNF) *)
+    let to_int = function
+      | X x -> x
+      | Xbar x -> -x
     
     (** Affiche un litéral sur la sortie out *)
     let print out = function
