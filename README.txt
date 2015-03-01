@@ -118,13 +118,36 @@ Sans les watched literals, tous les fichiers tests sont exécutés en moins d'un
 Avec les watched literals, le premier test (tests/downloads/aim-50-1_6-no-1.cnf) s'exécute en une douzaine de minutes,
 et les dernier (aim-50-6_0-*) s'exécute environ deux fois plus rapidement.
 
-L'explication pour le premier test est que l'algorithme de base arrive a utiliser
+L'explication pour le premier test est que l'algorithme de base arrive à utiliser
 un grand nombre de fois la propagation de litéraux purs (qui n'a pas été implémenté
 dans la version litéraux surveillés).
 
-Les temps d'exécution varient également car le choix de la prochaine variable et différent dans les deux implémentations.
+Les temps d'exécution varient également car le choix de la prochaine variable est différent dans les deux implémentations.
 
 On ne voit pas d'améliorations significatives car tous les fichier tests que nous utilisons
 possèdent des clauses avec un nombre très limité de litéraux (généralement 3). Les litéraux
 surveillés ont un intérêt lorsque la taille des clauses est suffisament grande.
+
+*********************************************************
+*                                                       *
+*                  IDÉE D'AMÉLIORATION                  *
+*                                                       *
+*********************************************************
+
+Même si la question semble compliquée, il peut être intéressant d'essayer d'implémenter de manière efficace
+la propagation des clauses unitaires avec les litéraux surveillés. Il est également possible de ne faire ces
+calculs qu'à des moments arbitraires (une fois toute les N modifications) et d'analyser les performances en
+fonction du paramètre N.
+
+*********************************************************
+*                                                       *
+*                  RÉPARTITION DU TRAVAIL               *
+*                                                       *
+*********************************************************
+
+Pour la répartition du travail, nous avons commencé par chercher comment organiser de manière modulaire notre code (lundi matin).
+Rémy a commencé par déclarer les différents types et signatures du projet.
+Le solver a été réalisé en majeur partie par Rémy et les modules permettant la manipulation des formules (avec et sans wl) par Simon.
+
+Le partage des fichier s'est faite à l'aide du dépôt Git le l'association Aliens.
 
