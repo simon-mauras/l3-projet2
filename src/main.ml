@@ -3,18 +3,22 @@ module Formula_wl = Formula_wl.Make (Literal.Make)
 module Solver = Dpll.Make(Formula)
 module Solver_wl = Dpll.Make(Formula_wl)
 
+(* Message affichés par le parser de la ligne de commande *)
 let usage_msg = "Usage: ./resol <options> input_file <output_file>"
-let version = "SAT-solver v0.1"
+let version = "SAT-solver v1. Remy Grunblatt & Simon Mauras"
 
+(* Arguments (ligne de commande *)
 let arg_debug = ref false
 let arg_wl = ref false
 let arg_input = ref ""
 let arg_output = ref ""
 
+(* Doc pour le parser de la ligne de commande *)
 let doc = [("-wl", Arg.Set arg_wl, "Use watched literals to compute satisfiability");
            ("-debug", Arg.Set arg_debug, "Print debug informations");
            ("-version", Arg.Unit (fun () -> print_endline version; exit 0), "Print version and exit")]
 
+(* Fonction appelée par le parser de la ligne de commande *)
 let add_file s =
   if !arg_input = ""
     then arg_input := s
@@ -22,8 +26,10 @@ let add_file s =
     then arg_output := s
     else (prerr_string "Warning: File '"; prerr_string s; prerr_string "' ignored.\n") 
 
+(* Parse l'entrée et renvoie une valeur de type Sigs.cnf *)
 let parse lexbuf = Parser.formula Lexer.main lexbuf
 
+(* Fonction principale *)
 let main () =
   Arg.parse doc add_file usage_msg;
   if !arg_input = ""
@@ -54,5 +60,6 @@ let main () =
       with
         | Sys_error s -> prerr_endline s (* no such file or directory, ... *)
     end
- 
-  let _ = main ()
+
+(* Executer main *)
+let _ = main ()

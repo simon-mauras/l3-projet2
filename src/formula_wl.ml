@@ -15,7 +15,7 @@ struct
   Le tableau contient pour chaque literal la liste des clauses dans lesquelles il est surveillé *)
   type watchedLiteralsArray = int list array
   
-  (** Infmations sur les litéraux.
+  (** Informations sur les litéraux.
   Le tableau contient pour chaque litéral un booléen étant vrai ssi le litéral a été mis à vrai *)
   type literalsArray = bool array
   
@@ -139,11 +139,12 @@ struct
         | None ->
           (match other with
              | None -> answers.isFalse <- true
-             | Some a -> if literals.(Literal.id_of_literal a)
-                           then () (* La clause est daje satisfaite *)
-                           else if literals.(Literal.id_of_literal (Literal.neg a))
-                             then answers.isFalse <- true (* La clause est fausse *)
-                             else answers.unitClauses <- a::answers.unitClauses); (* Il reste une unique manière pour satisfaire la clause *)
+             | Some a ->
+               if literals.(Literal.id_of_literal a)
+                 then () (* La clause est daje satisfaite *)
+                 else if literals.(Literal.id_of_literal (Literal.neg a))
+                        then answers.isFalse <- true (* La clause est fausse *)
+                        else answers.unitClauses <- a::answers.unitClauses); (* Il reste une unique manière pour satisfaire la clause *)
           true (* On garde le pointeur actuel car on en a pas trouve d'autre... *)
     in
     watchedLiterals.(Literal.id_of_literal (Literal.neg x)) <-
