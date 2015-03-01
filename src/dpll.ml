@@ -60,7 +60,7 @@ module Make : Sigs.Solver_type =
                modif := true;
                Formula.setLiteral x form;
                Stack.push (Deduction x) stack);
-            (* 2 : On Paris sur un litéral si aucune modification n'a été faite *)
+            (* 2 : On parie sur un litéral si aucune modification n'a été faite *)
             if not !modif then
               (match Formula.getFreeLiteral form with
                | None -> continue := false (* La formule est satisfaite *)
