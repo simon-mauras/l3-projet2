@@ -1,3 +1,6 @@
+(** Module implémentant l'algorithme DPLL *)
+
+(** Module de type Sigs.Solver_type *)
 module Make : Sigs.Solver_type =
   functor (Formula : Sigs.Formula_type) ->
   struct
@@ -15,19 +18,20 @@ module Make : Sigs.Solver_type =
       let l = to_list stack in
       if l = [] then None else Some (List.sort compare l)
 
+    (** Renvoie une solution à la formule donnée. Des informations de debug peuvent être afficher sur la sortie donnée *)
     let solve out form =
       let stack = Stack.create () in
       let continue = ref true in
       while !continue
       do
-        (* Check if formula's value is already determined *)
+        (* On vérifie que les hypothèses actuelles ne rendent pas la formule fausse *)
         if Formula.isFalse form then
           begin
             let rec unstack () =
               if Stack.is_empty stack
               then continue := false
               else match Stack.pop stack with
-                (* If it's a bet, we try the other possibility *)
+                (* Si un paris et contradictoire, sa contradiction est une déduction *)
                 | Bet x ->
                   Formula.forgetLiteral x form;
                   Formula.setLiteral (Literal.neg x) form;
@@ -40,23 +44,23 @@ module Make : Sigs.Solver_type =
           end
         else
           begin
-            (* First, simplify the formula *)
+            (* 1 : On commence par simplifier la formule *)
             let modif = ref false in
-            (* Unit clause propagation *)
+            (* Propagation des clauses unitaires *)
             (match Formula.getUnitClause form with
              | None -> ()
              | Some x ->
                modif := true;
                Formula.setLiteral x form;
                Stack.push (Deduction x) stack);
-            (* Pure literal propagation *)
+            (* Propagation des litétaux purs *)
             (match Formula.getPureLiteral form with
              | None -> ()
              | Some x ->
                modif := true;
                Formula.setLiteral x form;
                Stack.push (Deduction x) stack);
-            (* Bet on a literal if there is no modification *)
+            (* 2 : On Paris sur un litéral si aucune modification n'a été faite *)
             if not !modif then
               (match Formula.getFreeLiteral form with
                | None -> continue := false (* La formule est satisfaite *)
@@ -65,5 +69,6 @@ module Make : Sigs.Solver_type =
                  Stack.push (Bet x) stack);
           end
       done;
+      (* A la fin de la boucle, la pile est soit vide (non satisfiable) soit contient toutes les variables *)
       getSolution stack
   end

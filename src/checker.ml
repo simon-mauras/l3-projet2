@@ -23,13 +23,16 @@ let check out (nb_vars, nb_clauses, clauses) =
     let nbTrivial = ref 0 in
     let tabLiterals = Array.make (2*v+1) (-1) in
     let act = ref 0 in
-    let cl = List.filter (fun l -> act := !act + 1;
-                                   let trivial = ref false in
-                                   List.iter (fun i -> if tabLiterals.(v - i) = !act
-                                                         then trivial := true;
-                                                       tabLiterals.(v + i) <- !act) l;
-                                   if !trivial then nbTrivial := !nbTrivial + 1;
-                                   not !trivial) clauses in
+    let cl = List.filter (fun l ->
+                            act := !act + 1;
+                            let trivial = ref false in
+                            List.iter (fun i ->
+                                         if tabLiterals.(v - i) = !act
+                                           then trivial := true;
+                                         tabLiterals.(v + i) <- !act) l;
+                            if !trivial
+                              then nbTrivial := !nbTrivial + 1;
+                            not !trivial) clauses in
     if !nbTrivial > 0
       then Printf.fprintf out "Info: %d trivial clause(s) deleted.\n" !nbTrivial;
     
