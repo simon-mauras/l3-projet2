@@ -13,7 +13,7 @@ type solution = certificate option
 module type Literal_type =
 sig
   (** Type d'un literal *)
-  type t = X of int | Xbar of int
+  type t
   
   (** Construit un litéral (de type t) à partir d'un entier (Format DIMACS CNF) *)
   val make : int -> t

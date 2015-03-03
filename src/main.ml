@@ -1,5 +1,5 @@
-module Formula = Formula.Make (Literal.Make)
-module Formula_wl = Formula_wl.Make (Literal.Make)
+module Formula = Formula.Make (Literal2.Make)
+module Formula_wl = Formula_wl.Make (Literal2.Make)
 module Solver = Dpll.Make(Formula)
 module Solver_wl = Dpll.Make(Formula_wl)
 
