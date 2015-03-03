@@ -39,7 +39,7 @@ struct
     let compare x y =
       let vx = nbOccur.(Literal.id_of_literal x) + nbOccur.(Literal.id_of_literal (Literal.neg x)) in
       let vy = nbOccur.(Literal.id_of_literal y) + nbOccur.(Literal.id_of_literal (Literal.neg y)) in
-      vy - vx in
+      vx - vy in
     
     let watchedLiterals = Array.make (2*nb_vars) [] in
     
@@ -108,11 +108,9 @@ struct
     
     let rec remove = function
       | [] -> []
-      | a::l when a = x -> remove l
-      | a::l when a = Literal.neg x -> remove l
+      | a::l when a = x -> l
+      | a::l when a = Literal.neg x -> l
       | a::l -> a::(remove l) in
-    answers.unitClauses <- remove answers.unitClauses;
-    answers.pureLiterals <- remove answers.pureLiterals;
     answers.freeLiterals <- remove answers.freeLiterals;
     
     let find cl = match cl with
@@ -161,14 +159,20 @@ struct
   let isFalse (_,_,_,answers) = answers.isFalse
 
   (** Renvoie un litéral contenu dans une clause unitaire (sous les hypothèses actuelles) *)
-  let rec getUnitClause (_,_,_,answers) = match answers.unitClauses with
+  let rec getUnitClause (clauses, watchedLiterals, literals, answers) = match answers.unitClauses with
     | [] -> None
+    | x::l when (literals.(Literal.id_of_literal (Literal.neg x)) || literals.(Literal.id_of_literal x)) ->
+      answers.unitClauses <- l;
+      getUnitClause (clauses, watchedLiterals, literals, answers)
     | x::l -> Some x
     
   (** Renvoie un litéral dont la négation est absente de la formule (sous les hypothèses actuelles) *)
   (* Les litéraux surveillés ne sont pas implémentés dans la version actuelle (la liste est toujours vide) *)
-  let getPureLiteral (_,_,_,answers) = match answers.pureLiterals with
-    | [] -> None 
+  let rec getPureLiteral (clauses, watchedLiterals, literals, answers) = match answers.pureLiterals with
+    | [] -> None
+    | x::l when (literals.(Literal.id_of_literal (Literal.neg x)) || literals.(Literal.id_of_literal x)) -> 
+      answers.pureLiterals <- l;
+      getPureLiteral (clauses, watchedLiterals, literals, answers)
     | x::l -> Some x
     
   (** Renvoie un litéral sur lequel aucune hypothèse n'a été faite. *)

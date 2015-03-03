@@ -10,6 +10,10 @@ main:
 	$(CC) $(CFLAGS) $(SRC)/$@.native
 	mv $@.native resol
 
+prof:
+	$(CC) $(CFLAGS) $(SRC)/main.p.native
+	mv main.p.native resol.p
+
 clean:
 	$(CC) -clean
 
