@@ -76,7 +76,8 @@ struct
 
 
   (** Affiche la formule et divers informations associées sur la sortie out *)
-  let print out (clauses, watchedLiterals, literals, answers) =
+  let print out formula = 
+    let (clauses, watchedLiterals, literals, answers) = formula in
     let f x = Literal.print out x; output_string out " " in
     output_string out "----------- Clauses ------------\n";
     Array.iter (function l, a, b ->
@@ -103,7 +104,8 @@ struct
     output_string out "\n--------------------------------\n"
 
   (** Ajoute à la formule l'hypothèse que le litéral x soit vrai *)
-  let setLiteral x (clauses, watchedLiterals, literals, answers) =
+  let setLiteral x formula = 
+    let (clauses, watchedLiterals, literals, answers) = formula in
     literals.(Literal.id_of_literal x) <- true;
 
     let rec remove = function
@@ -149,7 +151,9 @@ struct
       List.filter update watchedLiterals.(Literal.id_of_literal (Literal.neg x))
 
   (** Oublie l'hypothèse faite sur le litéral x dans la formule *)
-  let forgetLiteral x (clauses, watchedLiterals, literals, answers) =
+  let forgetLiteral x formula = 
+    let (clauses, watchedLiterals, literals, answers) = formula in
+
     literals.(Literal.id_of_literal x) <- false;
     answers.unitClauses <- [];
     answers.freeLiterals <- x::answers.freeLiterals;
@@ -159,7 +163,10 @@ struct
   let isFalse (_,_,_,answers) = answers.isFalse
 
   (** Renvoie un litéral contenu dans une clause unitaire (sous les hypothèses actuelles) *)
-  let rec getUnitClause (clauses, watchedLiterals, literals, answers) = match answers.unitClauses with
+  let rec getUnitClause formula = 
+    let (clauses, watchedLiterals, literals, answers) = formula in
+
+    match answers.unitClauses with
     | [] -> None
     | x::l when (literals.(Literal.id_of_literal (Literal.neg x)) || literals.(Literal.id_of_literal x)) ->
       answers.unitClauses <- l;
@@ -168,7 +175,10 @@ struct
 
   (** Renvoie un litéral dont la négation est absente de la formule (sous les hypothèses actuelles) *)
   (* Les litéraux surveillés ne sont pas implémentés dans la version actuelle (la liste est toujours vide) *)
-  let rec getPureLiteral (clauses, watchedLiterals, literals, answers) = match answers.pureLiterals with
+  let rec getPureLiteral formula = 
+    let (clauses, watchedLiterals, literals, answers) = formula in
+
+    match answers.pureLiterals with
     | [] -> None
     | x::l when (literals.(Literal.id_of_literal (Literal.neg x)) || literals.(Literal.id_of_literal x)) -> 
       answers.pureLiterals <- l;

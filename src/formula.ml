@@ -40,7 +40,8 @@ struct
     (tabClauses, tabLiterals)
 
   (** Affiche la formule et divers informations associées sur la sortie out *)
-  let print out (tabClauses, tabLiterals) =
+  let print out formula = 
+    let (tabClauses, tabLiterals) = formula in
     Array.iter (fun (n,u,v)->
         output_string out (string_of_int n);
         LiteralSet.iter (fun x -> output_string out " "; Literal.print out x) u;
@@ -49,7 +50,8 @@ struct
         output_string out "\n") tabClauses
 
   (** Ajoute à la formule l'hypothèse que le litéral x soit vrai *)
-  let setLiteral x (tabClauses, tabLiterals) =
+  let setLiteral x formula = 
+    let (tabClauses, tabLiterals) = formula in
     let decr z =
       let state, nb, lst = tabLiterals.(Literal.id_of_literal z) in
       tabLiterals.(Literal.id_of_literal z) <- (state, nb-1, lst) in
@@ -69,7 +71,8 @@ struct
         decr (Literal.neg x)) lst2
 
   (** Oublie l'hypothèse faite sur le litéral x dans la formule *)
-  let forgetLiteral x (tabClauses, tabLiterals) =
+  let forgetLiteral x formula = 
+    let (tabClauses, tabLiterals) = formula in
     let incr z =
       let state, nb, lst = tabLiterals.(Literal.id_of_literal z) in
       tabLiterals.(Literal.id_of_literal z) <- (state, nb+1, lst) in
@@ -88,7 +91,8 @@ struct
         incr (Literal.neg x)) lst2
 
   (** Renvoie vrai si la formule contient une contradiction triviale sous les hypothèses actuelles *)
-  let isFalse (tabClauses,_) =
+  let isFalse formula = 
+    let (tabClauses, _) = formula in
     Array.fold_left (fun b (n,_,u) -> b || (n = 0 && u = LiteralSet.empty)) false tabClauses 
 
   (** Renvoie un litéral contenu dans une clause unitaire (sous les hypothèses actuelles) *)
@@ -99,7 +103,8 @@ struct
         else res) None tabClauses
 
   (** Renvoie un litéral dont la négation est absente de la formule (sous les hypothèses actuelles) *)
-  let getPureLiteral (_,tabLiterals) =
+  let getPureLiteral formula = 
+    let (_, tabLiterals) = formula in
     let ind = ref (-1) in
     for i = 0 to (Array.length tabLiterals) - 1 do
       let state, n, lst = tabLiterals.(i) in
