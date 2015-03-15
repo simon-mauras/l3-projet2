@@ -1,0 +1,18 @@
+* Pouvoir ajouter facilement des clauses à notre formule
+* Trouver pourquoi un literal a été assigné à une valeur donnée:
+    Supposition: None
+    Propagation: Some <indice de la clause unitaire que l'on a utilisé>
+* Se souvenir de quand le literal a été assigné dans le niveau de déduction courant.
+
+
+Algorithme:
+On vient de détecter une clause C_1 non satisfaite car on vient d'assigne le literal X à une valeur donnée.
+On regarde pourquoi le litéral a été assigné à la valeur donnée:
+-> Supposition:
+    on remonte
+-> Propagation:
+    on se donne la clause C_2 qui a entrainé l'assignation de X à la valeur donnée.
+    On fait la résolution sur C_1 et C_2. On a encore une clause fausse. On regarde le dernier literal assigné, on regarde pourquoi il a été assigné à sa valeur, […]
+    On effectue cette résolution jusqu'à arriver à une supposition.
+
+
