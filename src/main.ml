@@ -21,10 +21,10 @@ let doc = [("-wl", Arg.Set arg_wl, "Use watched literals to compute satisfiabili
 (* Fonction appelée par le parser de la ligne de commande *)
 let add_file s =
   if !arg_input = ""
-    then arg_input := s
+  then arg_input := s
   else if !arg_output = ""
-    then arg_output := s
-    else (prerr_string "Warning: File '"; prerr_string s; prerr_string "' ignored.\n") 
+  then arg_output := s
+  else (prerr_string "Warning: File '"; prerr_string s; prerr_string "' ignored.\n") 
 
 (* Parse l'entrée et renvoie une valeur de type Sigs.cnf *)
 let parse lexbuf = Parser.formula Lexer.main lexbuf
@@ -33,17 +33,17 @@ let parse lexbuf = Parser.formula Lexer.main lexbuf
 let main () =
   Arg.parse doc add_file usage_msg;
   if !arg_input = ""
-    then (prerr_string "No input file provided\n"; Arg.usage doc usage_msg)
-    else begin
-      try
-        let input = open_in !arg_input in
-        let output = if !arg_output <> ""
-                       then open_out !arg_output
-                       else stdout in
-        let lexbuf = Lexing.from_channel input in
-        let data = Checker.check stderr (parse lexbuf) in
-        
-        let s = if !arg_wl then
+  then (prerr_string "No input file provided\n"; Arg.usage doc usage_msg)
+  else begin
+    try
+      let input = open_in !arg_input in
+      let output = if !arg_output <> ""
+        then open_out !arg_output
+        else stdout in
+      let lexbuf = Lexing.from_channel input in
+      let data = Checker.check stderr (parse lexbuf) in
+
+      let s = if !arg_wl then
           let form = Formula_wl.make stderr data in
           let _ = if !arg_debug then Formula_wl.print stderr form in
           Solver_wl.solve stderr form
@@ -51,15 +51,15 @@ let main () =
           let form = Formula.make stderr data in
           let _ = if !arg_debug then Formula.print stderr form in
           Solver.solve stderr form in
-          
-        match s with
-          | None -> output_string output "s UNSATISFIABLE\n"
-          | Some l -> output_string output "s SATISFIABLE\n";
-                      List.iter (Printf.fprintf output "%d ") l;
-                      Printf.fprintf output "0\n"
-      with
-        | Sys_error s -> prerr_endline s (* no such file or directory, ... *)
-    end
+
+      match s with
+      | None -> output_string output "s UNSATISFIABLE\n"
+      | Some l -> output_string output "s SATISFIABLE\n";
+        List.iter (Printf.fprintf output "%d ") l;
+        Printf.fprintf output "0\n"
+    with
+    | Sys_error s -> prerr_endline s (* no such file or directory, ... *)
+  end
 
 (* Executer main *)
 let _ = main ()
