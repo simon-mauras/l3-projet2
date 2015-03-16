@@ -37,9 +37,9 @@ struct
       | 0 -> []
       | n -> (Literal.make n)::(literalList (n-1)) in
     let compare x y =
-      let vx = nbOccur.(Literal.id_of_literal x) + nbOccur.(Literal.id_of_literal (Literal.neg x)) in
-      let vy = nbOccur.(Literal.id_of_literal y) + nbOccur.(Literal.id_of_literal (Literal.neg y)) in
-      vx - vy in
+      let vx = min nbOccur.(Literal.id_of_literal x) nbOccur.(Literal.id_of_literal (Literal.neg x)) in
+      let vy = min nbOccur.(Literal.id_of_literal y) nbOccur.(Literal.id_of_literal (Literal.neg y)) in
+      vy - vx in
     
     let watchedLiterals = Array.make (2*nb_vars) [] in
     

@@ -22,6 +22,9 @@ module Make : Sigs.Solver_type =
     let solve out form =
       let stack = Stack.create () in
       let continue = ref true in
+      let statFreeLiteral = ref 0 in
+      let statUnitClause = ref 0 in
+      let statPureLiteral = ref 0 in
       while !continue
       do
         (* On vérifie que les hypothèses actuelles ne rendent pas la formule fausse *)
@@ -50,6 +53,7 @@ module Make : Sigs.Solver_type =
             (match Formula.getUnitClause form with
              | None -> ()
              | Some x ->
+               incr statUnitClause;
                modif := true;
                Formula.setLiteral x form;
                Stack.push (Deduction x) stack);
@@ -57,6 +61,7 @@ module Make : Sigs.Solver_type =
             (match Formula.getPureLiteral form with
              | None -> ()
              | Some x ->
+               incr statPureLiteral;
                modif := true;
                Formula.setLiteral x form;
                Stack.push (Deduction x) stack);
@@ -65,10 +70,18 @@ module Make : Sigs.Solver_type =
               (match Formula.getFreeLiteral form with
                | None -> continue := false (* La formule est satisfaite *)
                | Some x ->
+                 incr statFreeLiteral;
                  Formula.setLiteral x form;
                  Stack.push (Bet x) stack);
           end
       done;
+      
+      Printf.fprintf out "-------------------------------------\n";
+      Printf.fprintf out "Nombre de paris freeLiteral : %d\n" !statFreeLiteral;
+      Printf.fprintf out "Nombre de déductions UnitClause : %d\n" !statUnitClause;
+      Printf.fprintf out "Nombre de déductions PureLiteral : %d\n" !statPureLiteral;
+      Printf.fprintf out "-------------------------------------\n";
+      
       (* A la fin de la boucle, la pile est soit vide (non satisfiable) soit contient toutes les variables *)
       getSolution stack
   end
