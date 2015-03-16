@@ -100,11 +100,15 @@ struct
 
   (** Renvoie un litéral contenu dans une clause unitaire (sous les hypothèses actuelles) *)
   let getUnitClause (tabClauses,_) =
-    Vector.fold_left (fun res (n,_,v) ->
-        if n = 0 && LiteralSet.cardinal v = 1
-        then Some (LiteralSet.min_elt v)
-        else res) None tabClauses
-
+    let res = ref None in
+    for i=0 to (Vector.length tabClauses) - 1 do
+      let n,_,v = Vector.get tabClauses i in
+      if n = 0 && LiteralSet.cardinal v = 1
+        then res := Some (LiteralSet.min_elt v, i)
+    done;
+    !res
+  
+  (*
   (** Renvoie un litéral dont la négation est absente de la formule (sous les hypothèses actuelles) *)
   let getPureLiteral formula = 
     let (_, tabLiterals) = formula in
@@ -117,7 +121,8 @@ struct
     if !ind <> -1
     then Some (Literal.neg (Literal.literal_of_id !ind))
     else None
-
+  *)
+  
   (** Renvoie un litéral sur lequel aucune hypothèse n'a été faite. *)
   let getFreeLiteral (_, tabLiterals) =
     let value = ref min_int in
@@ -133,5 +138,10 @@ struct
     then Some(Literal.literal_of_id !index)
     else None
 
+  (** Renvoie la clause d'identifiant i. *)
+  let getClause (tabClauses,_) i =
+    let _, s1, s2 = Vector.get tabClauses i in
+    LiteralSet.fold (fun x l -> x::l) s1 (LiteralSet.fold (fun x l -> x::l) s2 [])
+  
 end
 

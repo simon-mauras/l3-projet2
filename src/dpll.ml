@@ -52,19 +52,19 @@ module Make : Sigs.Solver_type =
             (* Propagation des clauses unitaires *)
             (match Formula.getUnitClause form with
              | None -> ()
-             | Some x ->
+             | Some (x,i) ->
                incr statUnitClause;
                modif := true;
                Formula.setLiteral x form;
                Stack.push (Deduction x) stack);
-            (* Propagation des litétaux purs *)
+            (*(* Propagation des litétaux purs *)
             (match Formula.getPureLiteral form with
              | None -> ()
              | Some x ->
                incr statPureLiteral;
                modif := true;
                Formula.setLiteral x form;
-               Stack.push (Deduction x) stack);
+               Stack.push (Deduction x) stack);*)
             (* 2 : On parie sur un litéral si aucune modification n'a été faite *)
             if not !modif then
               (match Formula.getFreeLiteral form with

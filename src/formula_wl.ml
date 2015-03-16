@@ -21,7 +21,7 @@ struct
 
   (** Réponses aux différentes requetes. Cela permet d'éviter un grand nombre de calculs redondants *)
   type requestAnswer = {
-    mutable unitClauses : Literal.t list;
+    mutable unitClauses : (Literal.t * int) list;
     mutable pureLiterals : Literal.t list;
     mutable freeLiterals : Literal.t list;
     mutable isFalse : bool
@@ -61,7 +61,7 @@ struct
           answers.isFalse <- true;
           (lst, None, None)
         | x::[] ->
-          answers.unitClauses <- x::answers.unitClauses;
+          answers.unitClauses <- (x,i)::answers.unitClauses;
           watchedLiterals.(Literal.id_of_literal x) <- i::watchedLiterals.(Literal.id_of_literal x);
           (lst, Some x, None)
         | x::y::_->
@@ -83,7 +83,7 @@ struct
                           answers.isFalse <- true;
                           (lst, None, None)
                         | x::[] ->
-                          answers.unitClauses <- x::answers.unitClauses;
+                          answers.unitClauses <- (x,id)::answers.unitClauses;
                           watchedLiterals.(Literal.id_of_literal x) <- id::watchedLiterals.(Literal.id_of_literal x);
                           (lst, Some x, None)
                         | x::y::_->
@@ -95,6 +95,7 @@ struct
   let print out formula = 
     let (clauses, watchedLiterals, literals, answers) = formula in
     let f x = Literal.print out x; output_string out " " in
+    let f2 (x,_) = Literal.print out x; output_string out " " in
     output_string out "----------- Clauses ------------\n";
     Vector.iter (function l, a, b ->
         List.iter (fun x ->
@@ -108,7 +109,7 @@ struct
             end) l;
         output_string out "\n") clauses;
     output_string out "--------- unitClauses ----------\n";
-    List.iter f answers.unitClauses;
+    List.iter f2 answers.unitClauses;
     output_string out "\n--------- pureLiterals ---------\n";
     List.iter f answers.pureLiterals;
     output_string out "\n--------- freeLiterals ---------\n";
@@ -160,7 +161,7 @@ struct
            then () (* La clause est daje satisfaite *)
            else if literals.(Literal.id_of_literal (Literal.neg a))
            then answers.isFalse <- true (* La clause est fausse *)
-           else answers.unitClauses <- a::answers.unitClauses); (* Il reste une unique manière pour satisfaire la clause *)
+           else answers.unitClauses <- (a,i)::answers.unitClauses); (* Il reste une unique manière pour satisfaire la clause *)
         true (* On garde le pointeur actuel car on en a pas trouve d'autre... *)
     in
     watchedLiterals.(Literal.id_of_literal (Literal.neg x)) <-
@@ -184,11 +185,12 @@ struct
 
     match answers.unitClauses with
     | [] -> None
-    | x::l when (literals.(Literal.id_of_literal (Literal.neg x)) || literals.(Literal.id_of_literal x)) ->
+    | (x,i)::l when (literals.(Literal.id_of_literal (Literal.neg x)) || literals.(Literal.id_of_literal x)) ->
       answers.unitClauses <- l;
       getUnitClause (clauses, watchedLiterals, literals, answers)
-    | x::l -> Some x
+    | (x,i)::l -> Some (x,i)
 
+  (*
   (** Renvoie un litéral dont la négation est absente de la formule (sous les hypothèses actuelles) *)
   (* Les litéraux surveillés ne sont pas implémentés dans la version actuelle (la liste est toujours vide) *)
   let rec getPureLiteral formula = 
@@ -200,6 +202,7 @@ struct
       answers.pureLiterals <- l;
       getPureLiteral (clauses, watchedLiterals, literals, answers)
     | x::l -> Some x
+  *)
 
   (** Renvoie un litéral sur lequel aucune hypothèse n'a été faite. *)
   let getFreeLiteral formula = 
@@ -208,6 +211,11 @@ struct
     match answers.freeLiterals with
     | [] -> None
     | x::l -> Some x
+  
+  (** Renvoie la clause d'identifiant i. *)
+  let getClause formula i =
+    let (clauses, watchedLiterals, literals, answers) = formula in
+    let cl,_,_ = Vector.get clauses i in cl
 
 end
 

@@ -51,6 +51,9 @@ sig
   (** Construit une formule (de type t) à partir d'un élément de type cnf *)
   val make: out_channel -> cnf -> t
 
+  (** Ajoute une clause à la formule (apprentissage) *)
+  val addClause: clause -> t -> unit
+  
   (** Affiche une formule et divers informations associées sur une sortie donnée *)
   val print: out_channel -> t -> unit
 
@@ -64,16 +67,18 @@ sig
   val isFalse: t -> bool
 
   (** Renvoie un litéral contenu dans une clause unitaire (sous les hypothèses actuelles) *)
-  val getUnitClause: t -> Literal.t option
+  val getUnitClause: t -> (Literal.t * int) option
 
+  (*
   (** Renvoie un litéral dont la négation est absente de la formule (sous les hypothèses actuelles) *)
   val getPureLiteral: t -> Literal.t option
-
+  *)
+  
   (** Renvoie un litéral sur lequel aucune hypothèse n'a été faite. *)
   val getFreeLiteral: t -> Literal.t option 
   
-  (** Ajoute une clause à la formule (apprentissage) *)
-  val addClause: clause -> t -> unit
+  (** Renvoie ue clause à partir de son identifiant. *)
+  val getClause: t -> int -> Literal.t list
 end
 
 (** Signature d'un module implémentant un algorithme de résolution du problème SAT *)
