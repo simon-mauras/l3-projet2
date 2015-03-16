@@ -25,7 +25,7 @@ struct
   (** Renvoi la négation d'un litéral *)
   let neg x = -x
 
-  (** Renvoie un identifiant associé au litéral (entier entre 0 et 2*nbVars+1 si les variables sont numérotées entre 1 et nbVars) *)
+  (** Renvoie un identifiant associé au litéral (entier entre 0 et 2*nbVars-1 si les variables sont numérotées entre 1 et nbVars) *)
   let id_of_literal x =
     if x > 0 
     then 2*(x-1)
