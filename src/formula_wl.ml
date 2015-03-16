@@ -9,7 +9,7 @@ struct
   (** Informations sur les clauses. Le tableau contient pour chaque clause :
       - La liste des litéraux de la clause
       - Les itéraux surveillés dans cette clause (si sa taille est >= 2) *)
-  type clausesArray = (Literal.t list * Literal.t option * Literal.t option) array
+  type clausesArray = (Literal.t list * Literal.t option * Literal.t option) Vector.vector
 
   (** Information sur les litéraux surveillés.
       Le tableau contient pour chaque literal la liste des clauses dans lesquelles il est surveillé *)
@@ -51,7 +51,7 @@ struct
       isFalse = false
     } in
 
-    let tabClauses = Array.of_list (List.mapi (fun i l ->
+    let tabClauses = Vector.of_list (List.mapi (fun i l ->
         let lst = List.map (fun a ->
             let x = Literal.make a in
             nbOccur.(Literal.id_of_literal x) <- nbOccur.(Literal.id_of_literal x) + 1;
@@ -71,15 +71,32 @@ struct
 
     answers.freeLiterals <- List.sort compare (literalList nb_vars);
 
-    (tabClauses, watchedLiterals, tabLiterals, answers)
+    (tabClauses, watchedLiterals, tabLiterals, answers);;
 
+  (** Ajoute une clause à la formule (apprentissage) *)
+  let addClause cl formula =
+    let (clauses, watchedLiterals, literals, answers) = formula in
+    let lst = List.map Literal.make cl in
+    let id = Vector.length clauses in
+    Vector.add clauses (match lst with
+                        | [] ->
+                          answers.isFalse <- true;
+                          (lst, None, None)
+                        | x::[] ->
+                          answers.unitClauses <- x::answers.unitClauses;
+                          watchedLiterals.(Literal.id_of_literal x) <- id::watchedLiterals.(Literal.id_of_literal x);
+                          (lst, Some x, None)
+                        | x::y::_->
+                          watchedLiterals.(Literal.id_of_literal x) <- id::watchedLiterals.(Literal.id_of_literal x);
+                          watchedLiterals.(Literal.id_of_literal y) <- id::watchedLiterals.(Literal.id_of_literal y);
+                          (lst, Some x, Some y));;
 
   (** Affiche la formule et divers informations associées sur la sortie out *)
   let print out formula = 
     let (clauses, watchedLiterals, literals, answers) = formula in
     let f x = Literal.print out x; output_string out " " in
     output_string out "----------- Clauses ------------\n";
-    Array.iter (function l, a, b ->
+    Vector.iter (function l, a, b ->
         List.iter (fun x ->
             if a = Some x || b = Some x then begin
               output_string out "[";
@@ -128,12 +145,12 @@ struct
 
     let old = Some (Literal.neg x) in
     let update i =
-      let l, u, v = clauses.(i) in
+      let l, u, v = Vector.get clauses i in
       let other = if old = u then v else u in
-      match find clauses.(i) with
+      match find (Vector.get clauses i) with
       | Some a ->
         watchedLiterals.(Literal.id_of_literal a) <- i::watchedLiterals.(Literal.id_of_literal a);
-        clauses.(i) <- (l, Some a, other);
+        Vector.set clauses i (l, Some a, other);
         false (* On change le pointeur, car un autre a ete trouve *)
       | None ->
         (match other with
@@ -185,7 +202,10 @@ struct
     | x::l -> Some x
 
   (** Renvoie un litéral sur lequel aucune hypothèse n'a été faite. *)
-  let getFreeLiteral (_,_,_,answers) = match answers.freeLiterals with
+  let getFreeLiteral formula = 
+    let (clauses, watchedLiterals, literals, answers) = formula in
+    
+    match answers.freeLiterals with
     | [] -> None
     | x::l -> Some x
 

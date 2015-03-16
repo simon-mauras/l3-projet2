@@ -14,7 +14,7 @@ struct
       - Le nombre de litéraux qui rendent cette clause vrai
       - L'ensemble des litéraux dont la valeur est déjà fixée
       - L'ensemble des litéraux dont la valeur n'est pas encore déterminée *)
-  type t_clauses = (int * LiteralSet.t * LiteralSet.t) array
+  type t_clauses = (int * LiteralSet.t * LiteralSet.t) Vector.vector
 
   (** Information sur les litéraux. Le tableau contient pour chaque litéral :
       - L'état actuel du litéral
@@ -28,21 +28,24 @@ struct
   (** Construit une formule (de type t) à partir d'un élément de type Sigs.cnf *)
   let make out (nb_vars, nb_clauses, clauses) =
     let tabLiterals = Array.make (2*nb_vars) (Undefined, 0, []) in
-    let tabClauses = Array.make nb_clauses (0, LiteralSet.empty, LiteralSet.empty) in
-    List.iteri (fun i x -> tabClauses.(i) <- (0, LiteralSet.empty,
-                                              List.fold_left (fun x y ->
-                                                  let id = Literal.id_of_literal y in
-                                                  let _,nb,l = tabLiterals.(id) in
-                                                  tabLiterals.(id) <- (Undefined, nb+1, i::l);
-                                                  LiteralSet.add y x)
-                                                LiteralSet.empty
-                                                (List.map Literal.make x))) clauses;
+    let tabClauses = Vector.make nb_clauses (0, LiteralSet.empty, LiteralSet.empty) in
+    List.iteri (fun i x -> Vector.set tabClauses i (0, LiteralSet.empty,
+                                                    List.fold_left (fun x y ->
+                                                        let id = Literal.id_of_literal y in
+                                                        let _,nb,l = tabLiterals.(id) in
+                                                        tabLiterals.(id) <- (Undefined, nb+1, i::l);
+                                                        LiteralSet.add y x)
+                                                      LiteralSet.empty
+                                                      (List.map Literal.make x))) clauses;
     (tabClauses, tabLiterals)
 
+  (** Ajoute une clause à la formule (apprentissage) *)
+  let addClause cl formula = ()
+  
   (** Affiche la formule et divers informations associées sur la sortie out *)
   let print out formula = 
     let (tabClauses, tabLiterals) = formula in
-    Array.iter (fun (n,u,v)->
+    Vector.iter (fun (n,u,v)->
         output_string out (string_of_int n);
         LiteralSet.iter (fun x -> output_string out " "; Literal.print out x) u;
         output_string out " //";
@@ -60,14 +63,14 @@ struct
     tabLiterals.(Literal.id_of_literal x) <- (True, nb1, lst1);
     tabLiterals.(Literal.id_of_literal (Literal.neg x)) <- (False, nb2, lst2);
     List.iter (fun i ->
-        let n, u, v = tabClauses.(i) in
-        tabClauses.(i) <- (n+1, LiteralSet.add x u, LiteralSet.remove x v);
+        let n, u, v = Vector.get tabClauses i in
+        Vector.set tabClauses i (n+1, LiteralSet.add x u, LiteralSet.remove x v);
         if n = 0
         then LiteralSet.iter decr v
         else decr x) lst1;
     List.iter (fun i ->
-        let n, u, v = tabClauses.(i) in
-        tabClauses.(i) <- (n, LiteralSet.add (Literal.neg x) u, LiteralSet.remove (Literal.neg x) v);
+        let n, u, v = Vector.get tabClauses i in
+        Vector.set tabClauses i (n, LiteralSet.add (Literal.neg x) u, LiteralSet.remove (Literal.neg x) v);
         decr (Literal.neg x)) lst2
 
   (** Oublie l'hypothèse faite sur le litéral x dans la formule *)
@@ -81,23 +84,23 @@ struct
     tabLiterals.(Literal.id_of_literal x) <- (Undefined, nb1, lst1);
     tabLiterals.(Literal.id_of_literal (Literal.neg x)) <- (Undefined, nb2, lst2);
     List.iter (fun i ->
-        let n, u, v = tabClauses.(i) in
-        tabClauses.(i) <- (n-1, LiteralSet.remove x u, LiteralSet.add x v);
+        let n, u, v = Vector.get tabClauses i in
+        Vector.set tabClauses i (n-1, LiteralSet.remove x u, LiteralSet.add x v);
         if n = 1 then LiteralSet.iter incr v;
         incr x) lst1;
     List.iter (fun i ->
-        let n, u, v = tabClauses.(i) in
-        tabClauses.(i) <- (n, LiteralSet.remove (Literal.neg x) u, LiteralSet.add (Literal.neg x) v);
+        let n, u, v = Vector.get tabClauses i in
+        Vector.set tabClauses i (n, LiteralSet.remove (Literal.neg x) u, LiteralSet.add (Literal.neg x) v);
         incr (Literal.neg x)) lst2
 
   (** Renvoie vrai si la formule contient une contradiction triviale sous les hypothèses actuelles *)
   let isFalse formula = 
     let (tabClauses, _) = formula in
-    Array.fold_left (fun b (n,_,u) -> b || (n = 0 && u = LiteralSet.empty)) false tabClauses 
+    Vector.fold_left (fun b (n,_,u) -> b || (n = 0 && u = LiteralSet.empty)) false tabClauses 
 
   (** Renvoie un litéral contenu dans une clause unitaire (sous les hypothèses actuelles) *)
   let getUnitClause (tabClauses,_) =
-    Array.fold_left (fun res (n,_,v) ->
+    Vector.fold_left (fun res (n,_,v) ->
         if n = 0 && LiteralSet.cardinal v = 1
         then Some (LiteralSet.min_elt v)
         else res) None tabClauses

@@ -1,7 +1,10 @@
 (** Fichier contenant les types et signatures utilisées dans le projet *)
 
+(** Type d'une clause renvoyée par le parser *)
+type clause = int list
+
 (** Type d'une formule cnf renvoyée par le parser *)
-type cnf = int * int * int list list
+type cnf = int * int * clause list
 
 (** Type d'un certificat renvoyé par le solver *)
 type certificate = int list
@@ -68,6 +71,9 @@ sig
 
   (** Renvoie un litéral sur lequel aucune hypothèse n'a été faite. *)
   val getFreeLiteral: t -> Literal.t option 
+  
+  (** Ajoute une clause à la formule (apprentissage) *)
+  val addClause: clause -> t -> unit
 end
 
 (** Signature d'un module implémentant un algorithme de résolution du problème SAT *)
