@@ -39,6 +39,9 @@ struct
                                                       (List.map Literal.make x))) clauses;
     (tabClauses, tabLiterals)
 
+  (** Renvoie le nombre de variables dans la formule *)
+  let getNbVariables (_, tabLiterals) = (Array.length tabLiterals) / 2
+  
   (** Ajoute une clause à la formule (apprentissage) *)
   let addClause cl formula = ()
   
@@ -98,6 +101,10 @@ struct
     let (tabClauses, _) = formula in
     Vector.fold_left (fun b (n,_,u) -> b || (n = 0 && u = LiteralSet.empty)) false tabClauses 
 
+
+  (** Renvoie le literal et la clause responsable d'une éventuelle contradiction *)
+  let getContradiction formula = ()
+  
   (** Renvoie un litéral contenu dans une clause unitaire (sous les hypothèses actuelles) *)
   let getUnitClause (tabClauses,_) =
     let res = ref None in

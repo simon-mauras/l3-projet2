@@ -73,6 +73,9 @@ struct
 
     (tabClauses, watchedLiterals, tabLiterals, answers);;
 
+  (** Renvoie le nombre de variables dans la formule *)
+  let getNbVariables (_,_,literals,_) = (Array.length literals) / 2
+  
   (** Ajoute une clause à la formule (apprentissage) *)
   let addClause cl formula =
     let (clauses, watchedLiterals, literals, answers) = formula in

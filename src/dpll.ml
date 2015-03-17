@@ -21,6 +21,9 @@ module Make : Sigs.Solver_type =
     (** Renvoie une solution à la formule donnée. Des informations de debug peuvent être afficher sur la sortie donnée *)
     let solve out form =
       let stack = Stack.create () in
+      let currentDeductionLevel = ref 0 in
+      let deductionLevel = Array.make (2 * Formula.getNbVariables form) None in
+      let deductionCause = Array.make (2 * Formula.getNbVariables form) None in
       let continue = ref true in
       let statFreeLiteral = ref 0 in
       let statUnitClause = ref 0 in
@@ -30,6 +33,14 @@ module Make : Sigs.Solver_type =
         (* On vérifie que les hypothèses actuelles ne rendent pas la formule fausse *)
         if Formula.isFalse form then
           begin
+            Printf.fprintf out "deductionLevel = %d\n" !deductionLevel;
+            for i=0 to (Array.length deductionCause) - 1 do
+              Literal.print out (Literal.literal_of_id i);
+              match deductionCause.(i) with
+              | None -> Printf.fprintf out " X\n"
+              | Some i -> Printf.fprintf out " %d\n" i;
+            done;
+            exit 0;
             let rec unstack () =
               if Stack.is_empty stack
               then continue := false
@@ -39,11 +50,12 @@ module Make : Sigs.Solver_type =
                   Formula.forgetLiteral x form;
                   Formula.setLiteral (Literal.neg x) form;
                   Stack.push (Deduction (Literal.neg x)) stack;
+                  decr currentDeductionLevel;
                 | Deduction x ->
                   Formula.forgetLiteral x form;
                   unstack();
             in
-            unstack()
+            unstack();
           end
         else
           begin
@@ -56,7 +68,9 @@ module Make : Sigs.Solver_type =
                incr statUnitClause;
                modif := true;
                Formula.setLiteral x form;
-               Stack.push (Deduction x) stack);
+               Stack.push (Deduction x) stack;
+               deductionCause.(Literal.id_of_literal x) <- Some i
+               deductionLevel.(Literal.id_of_literal x) <- !currentDeductionLevel);
             (*(* Propagation des litétaux purs *)
             (match Formula.getPureLiteral form with
              | None -> ()
@@ -70,6 +84,7 @@ module Make : Sigs.Solver_type =
               (match Formula.getFreeLiteral form with
                | None -> continue := false (* La formule est satisfaite *)
                | Some x ->
+                 incr currentDeductionLevel;
                  incr statFreeLiteral;
                  Formula.setLiteral x form;
                  Stack.push (Bet x) stack);

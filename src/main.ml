@@ -10,11 +10,15 @@ let version = "SAT-solver v1. Remy Grunblatt & Simon Mauras"
 (* Arguments (ligne de commande *)
 let arg_debug = ref false
 let arg_wl = ref false
+let arg_cl = ref false
+let arg_clinteract = ref false
 let arg_input = ref ""
 let arg_output = ref ""
 
 (* Doc pour le parser de la ligne de commande *)
 let doc = [("-wl", Arg.Set arg_wl, "Use watched literals to compute satisfiability");
+           ("-cl", Arg.Set arg_debug, "Use clause learning");
+           ("-cl-interac", Arg.Set arg_debug, "Use interactive mode for clauses learning");
            ("-debug", Arg.Set arg_debug, "Print debug informations");
            ("-version", Arg.Unit (fun () -> print_endline version; exit 0), "Print version and exit")]
 

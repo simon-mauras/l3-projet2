@@ -50,6 +50,9 @@ sig
 
   (** Construit une formule (de type t) à partir d'un élément de type cnf *)
   val make: out_channel -> cnf -> t
+  
+  (** Renvoie le nombre de variables dans la formule *)
+  val getNbVariables: t -> int
 
   (** Ajoute une clause à la formule (apprentissage) *)
   val addClause: clause -> t -> unit
@@ -66,6 +69,9 @@ sig
   (** Renvoie vrai si la formule contient une contradiction triviale sous les hypothèses actuelles *)
   val isFalse: t -> bool
 
+  (** Renvoie le literal et la clause responsable d'une éventuelle contradiction *)
+  val getContradiction: t -> (Literal.t * int) option
+  
   (** Renvoie un litéral contenu dans une clause unitaire (sous les hypothèses actuelles) *)
   val getUnitClause: t -> (Literal.t * int) option
 
