@@ -70,7 +70,7 @@ sig
   val isFalse: t -> bool
 
   (** Renvoie le literal et la clause responsable d'une éventuelle contradiction *)
-  val getContradiction: t -> (Literal.t * int) option
+  val getConflict: t -> Literal.t list
   
   (** Renvoie un litéral contenu dans une clause unitaire (sous les hypothèses actuelles) *)
   val getUnitClause: t -> (Literal.t * int) option
@@ -91,7 +91,11 @@ end
 module type Solver_type =
   functor (F : Formula_type) ->
   sig
+    val setDebug: bool -> unit
+    val setClauseLearning: bool -> unit
+    val setClauseLearningInteractive: bool -> unit
+    
     (** Renvoie une solution à la formule donnée. Des informations de debug peuvent être afficher sur la sortie donnée *)
-    val solve: out_channel -> F.t -> solution
+    val solve: F.t -> solution
   end
 

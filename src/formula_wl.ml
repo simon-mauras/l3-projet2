@@ -24,7 +24,7 @@ struct
     mutable unitClauses : (Literal.t * int) list;
     mutable pureLiterals : Literal.t list;
     mutable freeLiterals : Literal.t list;
-    mutable isFalse : bool
+    mutable conflict : int option
   }
 
   (** Type d'une formule *)
@@ -48,7 +48,7 @@ struct
       unitClauses = [];
       pureLiterals = [];
       freeLiterals = [];
-      isFalse = false
+      conflict = None
     } in
 
     let tabClauses = Vector.of_list (List.mapi (fun i l ->
@@ -58,7 +58,7 @@ struct
             x) l in
         match lst with
         | [] ->
-          answers.isFalse <- true;
+          answers.conflict <- Some i;
           (lst, None, None)
         | x::[] ->
           answers.unitClauses <- (x,i)::answers.unitClauses;
@@ -83,7 +83,7 @@ struct
     let id = Vector.length clauses in
     Vector.add clauses (match lst with
                         | [] ->
-                          answers.isFalse <- true;
+                          answers.conflict <- Some id;
                           (lst, None, None)
                         | x::[] ->
                           answers.unitClauses <- (x,id)::answers.unitClauses;
@@ -118,7 +118,7 @@ struct
     output_string out "\n--------- freeLiterals ---------\n";
     List.iter f answers.freeLiterals;
     output_string out "\n----------- isFalse ------------\n";
-    if answers.isFalse
+    if answers.conflict <> None
     then output_string out "Formula is false"
     else output_string out "Can't assert that formula is false";
     output_string out "\n--------------------------------\n"
@@ -158,12 +158,12 @@ struct
         false (* On change le pointeur, car un autre a ete trouve *)
       | None ->
         (match other with
-         | None -> answers.isFalse <- true
+         | None -> answers.conflict <- Some i
          | Some a ->
            if literals.(Literal.id_of_literal a)
            then () (* La clause est daje satisfaite *)
            else if literals.(Literal.id_of_literal (Literal.neg a))
-           then answers.isFalse <- true (* La clause est fausse *)
+           then answers.conflict <- Some i (* La clause est fausse *)
            else answers.unitClauses <- (a,i)::answers.unitClauses); (* Il reste une unique manière pour satisfaire la clause *)
         true (* On garde le pointeur actuel car on en a pas trouve d'autre... *)
     in
@@ -177,10 +177,10 @@ struct
     literals.(Literal.id_of_literal x) <- false;
     answers.unitClauses <- [];
     answers.freeLiterals <- x::answers.freeLiterals;
-    answers.isFalse <- false
+    answers.conflict <- None
 
   (** Renvoie vrai si la formule contient une contradiction triviale sous les hypothèses actuelles *)
-  let isFalse (_,_,_,answers) = answers.isFalse
+  let isFalse (_,_,_,answers) = answers.conflict <> None 
 
   (** Renvoie un litéral contenu dans une clause unitaire (sous les hypothèses actuelles) *)
   let rec getUnitClause formula = 
@@ -219,6 +219,13 @@ struct
   let getClause formula i =
     let (clauses, watchedLiterals, literals, answers) = formula in
     let cl,_,_ = Vector.get clauses i in cl
+  
+  (** Renvoie la clause responsable d'une éventuelle contradiction *)
+  let getConflict formula =
+    let (clauses, watchedLiterals, literals, answers) = formula in
+    match answers.conflict with
+    | None -> failwith "This formula has no conflicts."
+    | Some i -> getClause formula i
 
 end
 

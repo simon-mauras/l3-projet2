@@ -1,5 +1,7 @@
 type 'a vector = 'a array ref * int ref
 
+exception Not_found
+
 let length ((t,s) : 'a vector) = !s
 
 let make n (x : 'a) : 'a vector = (ref (Array.make n x), ref n)
@@ -35,3 +37,14 @@ let iter f ((t,s) : 'a vector) =
   for i=0 to !s-1 do
     f !t.(i)
   done
+  
+let find f ((t,s) : 'a vector) =
+  let res = ref None in
+  for i=0 to !s-1 do
+    if !res = None && f !t.(i)
+      then res := Some i
+  done;
+  match !res with
+  | None -> raise Not_found;
+  | Some r -> r
+

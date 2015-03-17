@@ -11,14 +11,14 @@ let version = "SAT-solver v1. Remy Grunblatt & Simon Mauras"
 let arg_debug = ref false
 let arg_wl = ref false
 let arg_cl = ref false
-let arg_clinteract = ref false
+let arg_clinterac = ref false
 let arg_input = ref ""
 let arg_output = ref ""
 
 (* Doc pour le parser de la ligne de commande *)
 let doc = [("-wl", Arg.Set arg_wl, "Use watched literals to compute satisfiability");
-           ("-cl", Arg.Set arg_debug, "Use clause learning");
-           ("-cl-interac", Arg.Set arg_debug, "Use interactive mode for clauses learning");
+           ("-cl", Arg.Set arg_cl, "Use clause learning");
+           ("-cl-interac", Arg.Set arg_clinterac, "Use interactive mode for clauses learning");
            ("-debug", Arg.Set arg_debug, "Print debug informations");
            ("-version", Arg.Unit (fun () -> print_endline version; exit 0), "Print version and exit")]
 
@@ -44,17 +44,22 @@ let main () =
       let output = if !arg_output <> ""
         then open_out !arg_output
         else stdout in
+      
       let lexbuf = Lexing.from_channel input in
       let data = Checker.check stderr (parse lexbuf) in
 
-      let s = if !arg_wl then
+      let s = if !arg_wl then (
           let form = Formula_wl.make stderr data in
-          let _ = if !arg_debug then Formula_wl.print stderr form in
-          Solver_wl.solve stderr form
-        else
+          Solver_wl.setDebug !arg_debug;
+          Solver_wl.setClauseLearning !arg_cl;
+          Solver_wl.setClauseLearningInteractive !arg_clinterac;
+          Solver_wl.solve form)
+        else (
           let form = Formula.make stderr data in
-          let _ = if !arg_debug then Formula.print stderr form in
-          Solver.solve stderr form in
+          Solver.setDebug !arg_debug;
+          Solver.setClauseLearning !arg_cl;
+          Solver.setClauseLearningInteractive !arg_clinterac;
+          Solver.solve form) in
 
       match s with
       | None -> output_string output "s UNSATISFIABLE\n"

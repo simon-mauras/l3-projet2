@@ -100,10 +100,6 @@ struct
   let isFalse formula = 
     let (tabClauses, _) = formula in
     Vector.fold_left (fun b (n,_,u) -> b || (n = 0 && u = LiteralSet.empty)) false tabClauses 
-
-
-  (** Renvoie le literal et la clause responsable d'une éventuelle contradiction *)
-  let getContradiction formula = ()
   
   (** Renvoie un litéral contenu dans une clause unitaire (sous les hypothèses actuelles) *)
   let getUnitClause (tabClauses,_) =
@@ -149,6 +145,11 @@ struct
   let getClause (tabClauses,_) i =
     let _, s1, s2 = Vector.get tabClauses i in
     LiteralSet.fold (fun x l -> x::l) s1 (LiteralSet.fold (fun x l -> x::l) s2 [])
+  
+  (** Renvoie la clause responsable d'une éventuelle contradiction *)
+  let getConflict formula =
+    let (tabClauses, _) = formula in
+    getClause formula (Vector.find (fun (n,_,u) -> n = 0 && u = LiteralSet.empty) tabClauses)
   
 end
 
