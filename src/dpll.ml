@@ -88,8 +88,11 @@ module Make : Sigs.Solver_type =
                   Formula.setLiteral (Literal.neg x) form;
                   Stack.push (Deduction (Literal.neg x)) stack;
                   decr currentDeductionLevel;
+                  deductionLevel.(Literal.id_of_literal x) <- None (*Some !currentDeductionLevel*);
                 | Deduction x ->
                   Formula.forgetLiteral x form;
+                  deductionLevel.(Literal.id_of_literal x) <- None;
+                  deductionCause.(Literal.id_of_literal x) <- None;
                   unstack();
             in
             unstack();
