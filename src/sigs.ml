@@ -55,7 +55,7 @@ sig
   val getNbVariables: t -> int
 
   (** Ajoute une clause à la formule (apprentissage) *)
-  val addClause: clause -> t -> unit
+  val addClause: Literal.t list -> t -> int
   
   (** Affiche une formule et divers informations associées sur une sortie donnée *)
   val print: out_channel -> t -> unit

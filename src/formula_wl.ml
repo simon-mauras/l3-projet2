@@ -79,20 +79,20 @@ struct
   (** Ajoute une clause à la formule (apprentissage) *)
   let addClause cl formula =
     let (clauses, watchedLiterals, literals, answers) = formula in
-    let lst = List.map Literal.make cl in
     let id = Vector.length clauses in
-    Vector.add clauses (match lst with
+    Vector.add clauses (match cl with
                         | [] ->
                           answers.conflict <- Some id;
-                          (lst, None, None)
+                          (cl, None, None)
                         | x::[] ->
                           answers.unitClauses <- (x,id)::answers.unitClauses;
                           watchedLiterals.(Literal.id_of_literal x) <- id::watchedLiterals.(Literal.id_of_literal x);
-                          (lst, Some x, None)
+                          (cl, Some x, None)
                         | x::y::_->
                           watchedLiterals.(Literal.id_of_literal x) <- id::watchedLiterals.(Literal.id_of_literal x);
                           watchedLiterals.(Literal.id_of_literal y) <- id::watchedLiterals.(Literal.id_of_literal y);
-                          (lst, Some x, Some y));;
+                          (cl, Some x, Some y));
+    id (* On retourne l'identifiant de la nouvelle clause *)
 
   (** Affiche la formule et divers informations associées sur la sortie out *)
   let print out formula = 

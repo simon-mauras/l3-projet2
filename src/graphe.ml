@@ -14,6 +14,7 @@ struct
     adjacencyMatrix : bool array array;
     nodeType: node array;
     nodeLabel: string array;
+    learnedClause : Literal.t list;
   }
   
   let sort_uniq cmp l =
@@ -30,6 +31,7 @@ struct
     let matrix = Array.make_matrix (n+1) (n+1) false in
     let node = Array.make (n+1) Invisible in
     let label = Array.init (n+1) (fun i -> string_of_int (Literal.to_int (Literal.literal_of_id i))) in
+    let clause = ref [] in
     
     node.(n) <- Red;
     label.(n) <- "Conflict";
@@ -60,7 +62,8 @@ struct
       
       match level, cause, !uipFound with
       | a::[],_,false -> uipFound := true;
-                         node.(Literal.id_of_literal (Literal.neg a)) <- Yellow
+                         node.(Literal.id_of_literal (Literal.neg a)) <- Yellow;
+                         clause := conflict;
       | _,[],_ -> ()
       | _,a::l,true  -> node.(Literal.id_of_literal (Literal.neg a)) <- Blue;
       | _,a::l,false -> node.(Literal.id_of_literal (Literal.neg a)) <- Purple;
@@ -86,8 +89,10 @@ struct
                         matrix.(id).(n) <- true) conflict;
     explore conflict;
     
-    { adjacencyMatrix = matrix; nodeType = node; nodeLabel = label }
+    { adjacencyMatrix = matrix; nodeType = node; nodeLabel = label; learnedClause = !clause }
 
+  let getLearnedClause graph = graph.learnedClause
+  
   let export out graph name =
     Printf.fprintf out "digraph %s {\n" name;
     Array.iteri

@@ -43,7 +43,19 @@ struct
   let getNbVariables (_, tabLiterals) = (Array.length tabLiterals) / 2
   
   (** Ajoute une clause à la formule (apprentissage) *)
-  let addClause cl formula = ()
+  let addClause cl formula =
+    let (tabClauses, tabLiterals) = formula in
+    let n = Vector.length tabClauses in
+    Vector.add tabClauses (List.fold_left
+      (fun (nb, u, v) x ->
+         let id = Literal.id_of_literal x in
+         let state,nb,l = tabLiterals.(id) in
+         tabLiterals.(id) <- (state, nb+1, n::l);
+         match state with
+         | Undefined -> (nb, u, LiteralSet.add x v)
+         | True -> (nb+1, LiteralSet.add x u, v)
+         | False -> (nb, LiteralSet.add x u, v)) (0, LiteralSet.empty, LiteralSet.empty) cl);
+    n (* On retourne l'identifiant de la nouvelle clause *)
   
   (** Affiche la formule et divers informations associées sur la sortie out *)
   let print out formula = 

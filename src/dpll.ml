@@ -40,6 +40,7 @@ module Make : Sigs.Solver_type =
       let deductionCause = Array.make (2 * Formula.getNbVariables form) None in
       let continue = ref true in
       let interactive = ref !clauseLearningInteractive in
+      let clauseLearning = !clauseLearningInteractive || !clauseLearning in
       let statFreeLiteral = ref 0 in
       let statUnitClause = ref 0 in
       let statPureLiteral = ref 0 in
@@ -69,13 +70,32 @@ module Make : Sigs.Solver_type =
                 match read_line () with
                 | "g" ->
                   let outGraph = open_out "graph.dot" in
-                  Graph.export outGraph (Graph.make form deductionCause deductionLevel !currentDeductionLevel) "G";
+                  let graph = Graph.make form deductionCause deductionLevel !currentDeductionLevel in
+                  Graph.export outGraph graph "G";
                   close_out outGraph;
                   print_endline "Graph has been exported.";
+                  List.iter (fun l -> Printf.printf "%d " (Literal.to_int l)) (Graph.getLearnedClause graph);
+                  Printf.printf "\n";
+                  Stack.iter (function Bet l -> Printf.printf "B(%d %d %d) " (Literal.to_int l)
+                                                (match deductionCause.(Literal.id_of_literal l) with None -> -1 | Some x -> x)
+                                                (match deductionLevel.(Literal.id_of_literal l) with None -> -1 | Some x -> x)
+                               | Deduction l -> Printf.printf "D(%d %d %d) " (Literal.to_int l)
+                                                (match deductionCause.(Literal.id_of_literal l) with None -> -1 | Some x -> x)
+                                                (match deductionLevel.(Literal.id_of_literal l) with None -> -1 | Some x -> x)) stack;
+                  Printf.printf "\n";
                 | "c" -> ()
                 | "t" -> interactive := false
                 | _ -> choice () in
               choice ()
+            end;
+            
+            let addedClause = ref None in
+            let idAddedClause = ref None in
+            if clauseLearning then begin
+              let graph = Graph.make form deductionCause deductionLevel !currentDeductionLevel in
+              let clause = Graph.getLearnedClause graph in
+              idAddedClause := Some (Formula.addClause clause form);
+              addedClause := Some clause;
             end;
             
             let rec unstack () =
@@ -85,10 +105,19 @@ module Make : Sigs.Solver_type =
                 (* Si un paris et contradictoire, sa contradiction est une déduction *)
                 | Bet x ->
                   Formula.forgetLiteral x form;
-                  Formula.setLiteral (Literal.neg x) form;
-                  Stack.push (Deduction (Literal.neg x)) stack;
+                  deductionLevel.(Literal.id_of_literal x) <- None;
+                  deductionCause.(Literal.id_of_literal x) <- None;
                   decr currentDeductionLevel;
-                  deductionLevel.(Literal.id_of_literal x) <- None (*Some !currentDeductionLevel*);
+                  let stop = (match !addedClause with
+                              | None -> true
+                              | Some lst -> List.mem (Literal.neg x) lst) in
+                  if stop then begin
+                    Formula.setLiteral (Literal.neg x) form;
+                    Stack.push (Deduction (Literal.neg x)) stack;
+                    deductionLevel.(Literal.id_of_literal (Literal.neg x)) <- Some !currentDeductionLevel;
+                    deductionCause.(Literal.id_of_literal (Literal.neg x)) <- !idAddedClause;
+                  end else
+                    unstack()
                 | Deduction x ->
                   Formula.forgetLiteral x form;
                   deductionLevel.(Literal.id_of_literal x) <- None;
