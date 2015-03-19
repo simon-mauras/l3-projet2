@@ -91,7 +91,7 @@ struct
     List.iter propagation !topSort;
     
     let u = match !uip with
-            | None -> Literal.literal_of_id 0 (*failwith "Uip not found"*)
+            | None -> failwith "Uip not found"
             | Some i -> i in
     
     clause := (Literal.neg u)::!clause;

@@ -5,7 +5,7 @@ module Make : Sigs.Solver_type =
   functor (Formula : Sigs.Formula_type) ->
   struct
     module Literal = Formula.Literal  
-    module Graph = Graphe.Make(Formula)
+    module Graph = Graph.Make(Formula)
     type assertion = Bet of Literal.t | Deduction of Literal.t
     
     let outDebug = ref stderr
