@@ -44,22 +44,13 @@ module Make : Sigs.Solver_type =
       let statFreeLiteral = ref 0 in
       let statUnitClause = ref 0 in
       let statPureLiteral = ref 0 in
+      let statClauseLearning = ref 0 in
       while !continue
-      do
+      do (*Printf.printf "%d\n" (Stack.length stack);*)
         (* On vérifie que les hypothèses actuelles ne rendent pas la formule fausse *)
         if Formula.isFalse form then
           begin
-            (*Printf.fprintf !outDebug "deductionLevel = %d\n" !currentDeductionLevel;
-            for i=0 to (Array.length deductionCause) - 1 do
-              Literal.print !outDebug (Literal.literal_of_id i);
-              (match deductionCause.(i) with
-              | None -> Printf.fprintf !outDebug " X"
-              | Some i -> Printf.fprintf !outDebug " %d" i);
-              (match deductionLevel.(i) with
-              | None -> Printf.fprintf !outDebug " X\n"
-              | Some i -> Printf.fprintf !outDebug " %d\n" i)
-            done;*)
-            
+          
             if !interactive then begin
               print_endline "Conflict found.";
               print_endline "- g : export .dot file with the conflict graph.";
@@ -81,31 +72,35 @@ module Make : Sigs.Solver_type =
                 | _ -> choice () in
               choice ()
             end;
-            
+                                          
             let levelBacktrack = ref !currentDeductionLevel in
             if clauseLearning then begin
+              incr statClauseLearning;
               let graph = Graph.make form deductionCause deductionLevel !currentDeductionLevel in
               let clause = Graph.getLearnedClause graph in
               let uip = Graph.getUip graph in
+              let uipBet = ref false in
+              Stack.iter (function Bet x -> if x = Literal.neg uip then uipBet := true
+                           | Deduction x -> if x = Literal.neg uip then uipBet := false) stack;
               levelBacktrack := List.fold_left (fun maxi l -> let id = Literal.id_of_literal (Literal.neg l) in
                                                               match deductionLevel.(id) with
                                                               | None -> failwith "Erreur !!"
-                                                              | Some x -> if l = uip then maxi else max x maxi) 0 clause;
+                                                              | Some x -> if l = uip && not !uipBet then maxi else max x maxi) 0 clause;
             end;
+            
             let rec unstack () =
               if Stack.is_empty stack
               then continue := false
               else match Stack.pop stack with
                 (* Si un paris et contradictoire, sa contradiction est une déduction *)
                 | Bet x ->
-                  let level = match deductionLevel.(Literal.id_of_literal x) with
-                              | None -> failwith "Erreur"
-                              | Some x -> x in
+                  currentDeductionLevel := (match deductionLevel.(Literal.id_of_literal x) with
+                                            | None -> failwith "Erreur"
+                                            | Some x -> x);
                   Formula.forgetLiteral x form;
                   deductionLevel.(Literal.id_of_literal x) <- None;
                   deductionCause.(Literal.id_of_literal x) <- None;
-                  decr currentDeductionLevel;
-                  if !currentDeductionLevel < level then begin
+                  if !currentDeductionLevel <= !levelBacktrack then begin
                     Formula.setLiteral (Literal.neg x) form;
                     Stack.push (Deduction (Literal.neg x)) stack;
                     deductionLevel.(Literal.id_of_literal (Literal.neg x)) <- Some !currentDeductionLevel;
@@ -118,6 +113,7 @@ module Make : Sigs.Solver_type =
                   deductionCause.(Literal.id_of_literal x) <- None;
                   unstack();
             in
+            
             unstack();
           end
         else
@@ -159,6 +155,7 @@ module Make : Sigs.Solver_type =
       Printf.fprintf !outDebug "Nombre de paris freeLiteral : %d\n" !statFreeLiteral;
       Printf.fprintf !outDebug "Nombre de déductions UnitClause : %d\n" !statUnitClause;
       Printf.fprintf !outDebug "Nombre de déductions PureLiteral : %d\n" !statPureLiteral;
+      Printf.fprintf !outDebug "Nombre de clause déduites ClauseLearning : %d\n" !statClauseLearning;
       Printf.fprintf !outDebug "-------------------------------------\n";
       
       (* A la fin de la boucle, la pile est soit vide (non satisfiable) soit contient toutes les variables *)

@@ -50,9 +50,9 @@ struct
       (*List.iter (fun l -> Printf.printf "%d " (Literal.to_int l)) conflict;
       Printf.printf "\n";*)
       let level = List.filter (fun lit ->
-                                match deductionLevel.(Literal.id_of_literal (Literal.neg lit)) with
-                                | None -> failwith (Printf.sprintf "Erreur =( %d" (Literal.to_int (Literal.neg lit)))
-                                | Some l -> l = currentDeductionLevel) conflict in
+                                 match deductionLevel.(Literal.id_of_literal (Literal.neg lit)) with
+                                 | None -> failwith (Printf.sprintf "Error !")
+                                 | Some l -> l = currentDeductionLevel) conflict in
                                 
       let cause = List.filter (fun l -> deductionCause.(Literal.id_of_literal (Literal.neg l)) <> None) level in
       
