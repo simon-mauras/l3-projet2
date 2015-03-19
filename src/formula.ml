@@ -47,14 +47,14 @@ struct
     let (tabClauses, tabLiterals) = formula in
     let n = Vector.length tabClauses in
     Vector.add tabClauses (List.fold_left
-      (fun (nb, u, v) x ->
+      (fun (a, u, v) x ->
          let id = Literal.id_of_literal x in
          let state,nb,l = tabLiterals.(id) in
          tabLiterals.(id) <- (state, nb+1, n::l);
          match state with
          | Undefined -> (nb, u, LiteralSet.add x v)
-         | True -> (nb+1, LiteralSet.add x u, v)
-         | False -> (nb, LiteralSet.add x u, v)) (0, LiteralSet.empty, LiteralSet.empty) cl);
+         | True -> (a+1, LiteralSet.add x u, v)
+         | False -> (a, LiteralSet.add x u, v)) (0, LiteralSet.empty, LiteralSet.empty) cl);
     n (* On retourne l'identifiant de la nouvelle clause *)
   
   (** Affiche la formule et divers informations associées sur la sortie out *)

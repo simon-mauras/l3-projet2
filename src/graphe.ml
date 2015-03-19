@@ -15,6 +15,7 @@ struct
     nodeType: node array;
     nodeLabel: string array;
     learnedClause : Literal.t list;
+    uip : Literal.t;
   }
   
   let sort_uniq cmp l =
@@ -32,6 +33,7 @@ struct
     let node = Array.make (n+1) Invisible in
     let label = Array.init (n+1) (fun i -> string_of_int (Literal.to_int (Literal.literal_of_id i))) in
     let clause = ref [] in
+    let uip = ref None in
     
     node.(n) <- Red;
     label.(n) <- "Conflict";
@@ -43,14 +45,13 @@ struct
       | a::l -> accumulate (a::res) l in
       accumulate (accumulate [] l1) l2 in
     
-    let uipFound = ref false in
     let rec explore cl =
       let conflict = sort_uniq (Literal.compare) cl in
       (*List.iter (fun l -> Printf.printf "%d " (Literal.to_int l)) conflict;
       Printf.printf "\n";*)
       let level = List.filter (fun lit ->
                                 match deductionLevel.(Literal.id_of_literal (Literal.neg lit)) with
-                                | None -> false (* Erreur *)
+                                | None -> failwith (Printf.sprintf "Erreur =( %d" (Literal.to_int (Literal.neg lit)))
                                 | Some l -> l = currentDeductionLevel) conflict in
                                 
       let cause = List.filter (fun l -> deductionCause.(Literal.id_of_literal (Literal.neg l)) <> None) level in
@@ -60,13 +61,16 @@ struct
       List.iter (fun l -> Printf.printf "%d " (Literal.to_int l)) cause;
       Printf.printf "\n";*)
       
-      match level, cause, !uipFound with
-      | a::[],_,false -> uipFound := true;
-                         node.(Literal.id_of_literal (Literal.neg a)) <- Yellow;
-                         clause := conflict;
-      | _,[],_ -> ()
-      | _,a::l,true  -> node.(Literal.id_of_literal (Literal.neg a)) <- Blue;
-      | _,a::l,false -> node.(Literal.id_of_literal (Literal.neg a)) <- Purple;
+      match level, cause, !uip with
+      | a::[],_,None -> uip := Some a;
+                        clause := conflict;
+                        node.(Literal.id_of_literal (Literal.neg a)) <- Yellow;
+      | a::l,[],_ -> uip := Some a;
+                     clause := conflict;
+                     node.(Literal.id_of_literal (Literal.neg a)) <- Yellow;
+      | [],[],_ -> ()
+      | _,a::l,Some(u)  -> node.(Literal.id_of_literal (Literal.neg a)) <- Blue;
+      | _,a::l,None -> node.(Literal.id_of_literal (Literal.neg a)) <- Purple;
                      
       match cause with
       | [] -> ()
@@ -81,6 +85,7 @@ struct
                               then matrix.(id).(litId) <- true) reason;
         (*List.iter (fun l -> Printf.printf "%d " (Literal.to_int l)) reason;
         Printf.printf "\n";
+        Printf.printf "%d\n" (Literal.to_int a);
         Printf.printf "\n";*)
         explore (fusion a conflict reason) in
     
@@ -89,9 +94,15 @@ struct
                         matrix.(id).(n) <- true) conflict;
     explore conflict;
     
-    { adjacencyMatrix = matrix; nodeType = node; nodeLabel = label; learnedClause = !clause }
+    let u = match !uip with
+            | None -> failwith "Uip not found"
+            | Some x -> x in
+    
+    { adjacencyMatrix = matrix; nodeType = node; nodeLabel = label; learnedClause = !clause; uip = u }
 
   let getLearnedClause graph = graph.learnedClause
+  
+  let getUip graph = graph.uip
   
   let export out graph name =
     Printf.fprintf out "digraph %s {\n" name;

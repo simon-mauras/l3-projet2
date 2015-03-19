@@ -76,46 +76,40 @@ module Make : Sigs.Solver_type =
                   print_endline "Graph has been exported.";
                   List.iter (fun l -> Printf.printf "%d " (Literal.to_int l)) (Graph.getLearnedClause graph);
                   Printf.printf "\n";
-                  Stack.iter (function Bet l -> Printf.printf "B(%d %d %d) " (Literal.to_int l)
-                                                (match deductionCause.(Literal.id_of_literal l) with None -> -1 | Some x -> x)
-                                                (match deductionLevel.(Literal.id_of_literal l) with None -> -1 | Some x -> x)
-                               | Deduction l -> Printf.printf "D(%d %d %d) " (Literal.to_int l)
-                                                (match deductionCause.(Literal.id_of_literal l) with None -> -1 | Some x -> x)
-                                                (match deductionLevel.(Literal.id_of_literal l) with None -> -1 | Some x -> x)) stack;
-                  Printf.printf "\n";
                 | "c" -> ()
                 | "t" -> interactive := false
                 | _ -> choice () in
               choice ()
             end;
             
-            let addedClause = ref None in
-            let idAddedClause = ref None in
+            let levelBacktrack = ref !currentDeductionLevel in
             if clauseLearning then begin
               let graph = Graph.make form deductionCause deductionLevel !currentDeductionLevel in
               let clause = Graph.getLearnedClause graph in
-              idAddedClause := Some (Formula.addClause clause form);
-              addedClause := Some clause;
+              let uip = Graph.getUip graph in
+              levelBacktrack := List.fold_left (fun maxi l -> let id = Literal.id_of_literal (Literal.neg l) in
+                                                              match deductionLevel.(id) with
+                                                              | None -> failwith "Erreur !!"
+                                                              | Some x -> if l = uip then maxi else max x maxi) 0 clause;
             end;
-            
             let rec unstack () =
               if Stack.is_empty stack
               then continue := false
               else match Stack.pop stack with
                 (* Si un paris et contradictoire, sa contradiction est une déduction *)
                 | Bet x ->
+                  let level = match deductionLevel.(Literal.id_of_literal x) with
+                              | None -> failwith "Erreur"
+                              | Some x -> x in
                   Formula.forgetLiteral x form;
                   deductionLevel.(Literal.id_of_literal x) <- None;
                   deductionCause.(Literal.id_of_literal x) <- None;
                   decr currentDeductionLevel;
-                  let stop = (match !addedClause with
-                              | None -> true
-                              | Some lst -> List.mem (Literal.neg x) lst) in
-                  if stop then begin
+                  if !currentDeductionLevel < level then begin
                     Formula.setLiteral (Literal.neg x) form;
                     Stack.push (Deduction (Literal.neg x)) stack;
                     deductionLevel.(Literal.id_of_literal (Literal.neg x)) <- Some !currentDeductionLevel;
-                    deductionCause.(Literal.id_of_literal (Literal.neg x)) <- !idAddedClause;
+                    deductionCause.(Literal.id_of_literal (Literal.neg x)) <- None;
                   end else
                     unstack()
                 | Deduction x ->
