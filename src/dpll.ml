@@ -46,10 +46,7 @@ module Make : Sigs.Solver_type =
       let statPureLiteral = ref 0 in
       let statClauseLearning = ref 0 in
       while !continue
-      do (*Printf.printf "%d\n" (Stack.length stack);*)
-        (*Stack.iter (function Bet l | Deduction l -> Printf.printf "(%d %d)" (Literal.to_int l)
-                                                                            (match deductionLevel.(Literal.id_of_literal l) with Some x -> x)) stack;
-        Printf.printf "[%d]\n" !currentDeductionLevel;*)
+      do
         (* On vérifie que les hypothèses actuelles ne rendent pas la formule fausse *)
         if Formula.isFalse form then
           begin
@@ -67,9 +64,10 @@ module Make : Sigs.Solver_type =
                   let graph = Graph.make form deductionCause deductionLevel !currentDeductionLevel in
                   Graph.export outGraph graph "G";
                   close_out outGraph;
+                  Printf.printf "Learned clause :";
+                  List.iter (fun l -> Printf.printf " %d" (Literal.to_int l)) (Graph.getLearnedClause graph);
+                  Printf.printf " 0\n";
                   print_endline "Graph has been exported.";
-                  List.iter (fun l -> Printf.printf "%d " (Literal.to_int l)) (Graph.getLearnedClause graph);
-                  Printf.printf "\n%d\n" (Literal.to_int (Graph .getUip graph));
                 | "c" -> ()
                 | "t" -> interactive := false
                 | _ -> choice () in
@@ -90,7 +88,7 @@ module Make : Sigs.Solver_type =
               
               let lvl = List.fold_left (fun maxi l -> let id = Literal.id_of_literal (Literal.neg l) in
                                                       match deductionLevel.(id) with
-                                                      | None -> failwith "Erreur !!"
+                                                      | None -> failwith "Error: deductionLevel"
                                                       | Some x -> if l = Literal.neg uip then maxi else max x maxi) 0 clause in 
                                                       
               if lvl <> !currentDeductionLevel
@@ -109,70 +107,52 @@ module Make : Sigs.Solver_type =
                   Stack.push (Deduction u) stack;
                   deductionLevel.(Literal.id_of_literal u) <- Some !currentDeductionLevel;
                   deductionCause.(Literal.id_of_literal u) <- Some !learnedClause;
-              end else match Stack.pop stack with
-                | Bet x ->
-                  (match deductionLevel.(Literal.id_of_literal x), !levelBacktrack with
-                    | None, _ -> failwith "Erreur !"
-                    | Some lvl, None ->
-                      currentDeductionLevel := lvl;
-                      Formula.forgetLiteral x form;
-                      deductionLevel.(Literal.id_of_literal x) <- None;
-                      deductionCause.(Literal.id_of_literal x) <- None;
-                      Formula.setLiteral (Literal.neg x) form;
-                      Stack.push (Deduction (Literal.neg x)) stack;
-                      deductionLevel.(Literal.id_of_literal (Literal.neg x)) <- Some !currentDeductionLevel;
-                      deductionCause.(Literal.id_of_literal (Literal.neg x)) <- None;
-                    | Some lvl, Some lvlBacktrack ->
-                      currentDeductionLevel := lvl;
-                      if lvl > lvlBacktrack then begin
-                        Formula.forgetLiteral x form;
-                        deductionLevel.(Literal.id_of_literal x) <- None;
-                        deductionCause.(Literal.id_of_literal x) <- None;
-                        unstack ()
-                      end else begin
-                        Stack.push (Bet x) stack;
-                        match !deductionUip with
-                        | None -> failwith "Error !"
-                        | Some u ->
-                          Formula.setLiteral u form;
-                          Stack.push (Deduction u) stack;
-                          deductionLevel.(Literal.id_of_literal u) <- Some !currentDeductionLevel;
-                          deductionCause.(Literal.id_of_literal u) <- Some !learnedClause;
-                      end)
-                | Deduction x ->
-                  (match deductionLevel.(Literal.id_of_literal x), !levelBacktrack with
-                    | None, _ -> failwith "Erreur !"
-                    | Some lvl, None ->
-                      currentDeductionLevel := lvl;
-                      Formula.forgetLiteral x form;
-                      deductionLevel.(Literal.id_of_literal x) <- None;
-                      deductionCause.(Literal.id_of_literal x) <- None;
-                      unstack();
-                    | Some lvl, Some lvlBacktrack ->
-                      currentDeductionLevel := lvl;
-                      if lvl > lvlBacktrack then begin
-                        Formula.forgetLiteral x form;
-                        deductionLevel.(Literal.id_of_literal x) <- None;
-                        deductionCause.(Literal.id_of_literal x) <- None;
-                        unstack ()
-                      end else begin
-                        Stack.push (Bet x) stack;
-                        match !deductionUip with
-                        | None -> failwith "Error !"
-                        | Some u ->
-                          Formula.setLiteral u form;
-                          Stack.push (Deduction u) stack;
-                          deductionLevel.(Literal.id_of_literal u) <- Some !currentDeductionLevel;
-                          deductionCause.(Literal.id_of_literal u) <- Some !learnedClause;
-                      end)
+              end else begin
+                let s = Stack.pop stack in
+                let x = match s with Bet l | Deduction l -> l in
+                match s, deductionLevel.(Literal.id_of_literal x), !levelBacktrack  with
+                | _, None, _ -> failwith "Error: deductionLevel"
+                | Bet x, Some lvl, None ->
+                  currentDeductionLevel := lvl;
+                  Formula.forgetLiteral x form;
+                  deductionLevel.(Literal.id_of_literal x) <- None;
+                  deductionCause.(Literal.id_of_literal x) <- None;
+                  Formula.setLiteral (Literal.neg x) form;
+                  Stack.push (Deduction (Literal.neg x)) stack;
+                  deductionLevel.(Literal.id_of_literal (Literal.neg x)) <- Some !currentDeductionLevel;
+                  deductionCause.(Literal.id_of_literal (Literal.neg x)) <- None;
+                | Deduction x, Some lvl, None ->
+                  currentDeductionLevel := lvl;
+                  Formula.forgetLiteral x form;
+                  deductionLevel.(Literal.id_of_literal x) <- None;
+                  deductionCause.(Literal.id_of_literal x) <- None;
+                  unstack();
+                | Bet x, Some lvl, Some lvlBacktrack
+                | Deduction x, Some lvl, Some lvlBacktrack ->
+                  currentDeductionLevel := lvl;
+                  if lvl > lvlBacktrack then begin
+                    Formula.forgetLiteral x form;
+                    deductionLevel.(Literal.id_of_literal x) <- None;
+                    deductionCause.(Literal.id_of_literal x) <- None;
+                    unstack ()
+                  end else begin
+                    Stack.push (Bet x) stack;
+                    match !deductionUip with
+                    | None -> failwith "Error: deductionUip."
+                    | Some u ->
+                      Formula.setLiteral u form;
+                      Stack.push (Deduction u) stack;
+                      deductionLevel.(Literal.id_of_literal u) <- Some !currentDeductionLevel;
+                      deductionCause.(Literal.id_of_literal u) <- Some !learnedClause;
+                  end
+                end
             in
-            (*Printf.printf "----------------------------------------\n";
-            Printf.printf "%d %d\n" (Stack.length stack) !currentDeductionLevel;*)
+            
             if !currentDeductionLevel = 0 then begin
               Stack.clear stack;
               continue := false;
             end else unstack();
-            (*Printf.printf "%d %d\n" (Stack.length stack) !currentDeductionLevel;*)
+            
           end
         else
           begin

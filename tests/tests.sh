@@ -3,7 +3,7 @@ do
   echo "-----------------------------------------";
   echo $i;
 
-  time ../resol -debug -cl -wl $i resol.out
+  time ../resol -debug -wl -cl $i resol.out
   minisat $i > minisat.out
 
   grep "s UNSATISFIABLE" resol.out > resol.unsat
