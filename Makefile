@@ -17,3 +17,4 @@ prof:
 clean:
 	$(CC) -clean
 
+TESTS := 

@@ -7,3 +7,5 @@ parser.ml
 parser.mli
 resol
 resol.opt
+tests/downloads/*.cnf
+tests/generator/*.cnf

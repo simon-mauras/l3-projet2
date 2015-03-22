@@ -28,6 +28,10 @@ Main
       +-- L : Literal_type
       |
       +-- F : Formula_type
+      |
+      +-- Graph
+           |
+           +-- F : Formula_type
 
 
 *********************************************************
@@ -134,10 +138,7 @@ surveillés ont un intérêt lorsque la taille des clauses est suffisament grand
 *                                                       *
 *********************************************************
 
-Même si la question semble compliquée, il peut être intéressant d'essayer d'implémenter de manière efficace
-la propagation des clauses unitaires avec les litéraux surveillés. Il est également possible de ne faire ces
-calculs qu'à des moments arbitraires (une fois toute les N modifications) et d'analyser les performances en
-fonction du paramètre N.
+
 
 *********************************************************
 *                                                       *
