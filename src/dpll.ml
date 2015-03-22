@@ -9,17 +9,20 @@ module Make : Sigs.Solver_type =
     type assertion = Bet of Literal.t | Deduction of Literal.t
     
     let outDebug = ref stderr
+    let clauseLearning = ref false
+    let clauseLearningInteractive = ref false
+    
+    (** Active l'affichage d'informations de debug *)
     let setDebug b =
       outDebug := if b
         then stderr
         else open_out "/dev/null"
     
-    let clauseLearning = ref false
+    (** Active l'apprentissage de clause *)
     let setClauseLearning b = clauseLearning := b
     
-    let clauseLearningInteractive = ref false
+    (** Active l'apprentissage de clause interactif *)
     let setClauseLearningInteractive b = clauseLearningInteractive := b
-    
     
     let getSolution stack =
       let compare a b = (abs a) - (abs b) in

@@ -1,0 +1,21 @@
+--- Comment compiler ? -----
+make
+
+--- Comment tester ? -------
+cd tests
+# Tests téléchargés
+cd downloads
+make
+cd ..
+# Tests générés
+cd generator
+make
+cd ..
+# Test
+./tests.sh
+
+--- Comment profiler ? -----
+make prof
+./resol.p tests/ex1.cnf
+gprof resol.p > prof.txt
+
