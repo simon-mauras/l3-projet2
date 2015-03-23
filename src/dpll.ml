@@ -1,5 +1,5 @@
 (** Module implémentant l'algorithme DPLL *)
- 
+
 (** Module de type Sigs.Solver_type *)
 module Make : Sigs.Solver_type =
   functor (Formula : Sigs.Formula_type) ->
@@ -9,20 +9,17 @@ module Make : Sigs.Solver_type =
     type assertion = Bet of Literal.t | Deduction of Literal.t
     
     let outDebug = ref stderr
-    let clauseLearning = ref false
-    let clauseLearningInteractive = ref false
-    
-    (** Active l'affichage d'informations de debug *)
     let setDebug b =
       outDebug := if b
         then stderr
         else open_out "/dev/null"
     
-    (** Active l'apprentissage de clause *)
+    let clauseLearning = ref false
     let setClauseLearning b = clauseLearning := b
     
-    (** Active l'apprentissage de clause interactif *)
+    let clauseLearningInteractive = ref false
     let setClauseLearningInteractive b = clauseLearningInteractive := b
+    
     
     let getSolution stack =
       let compare a b = (abs a) - (abs b) in

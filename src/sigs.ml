@@ -101,14 +101,8 @@ end
 module type Solver_type =
   functor (F : Formula_type) ->
   sig
-  
-    (** Active l'affichage d'informations de debug *)
     val setDebug: bool -> unit
-    
-    (** Active l'apprentissage de clause *)
     val setClauseLearning: bool -> unit
-    
-    (** Active l'apprentissage de clause interactif *)
     val setClauseLearningInteractive: bool -> unit
 
     (** Renvoie une solution à la formule donnée. Des informations de debug peuvent être afficher sur la sortie donnée *)

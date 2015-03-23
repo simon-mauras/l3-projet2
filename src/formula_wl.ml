@@ -1,5 +1,5 @@
 (** Module permettant la manipulation de formules sous forme normale conjonctive avec le litéraux surveillés *)
-  
+
 (** Module de type Sigs.Formla_type *)
 module Make (L: Sigs.Literal_type) : Sigs.Formula_type =
 struct
