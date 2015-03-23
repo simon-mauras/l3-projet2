@@ -40,74 +40,38 @@ Main
 *                                                       *
 *********************************************************
 
-Une formule est un type mutable (Sigs.Formula_type.t) qui est modifiée pour éviter la duplication des données.
-Les fonctions permettant de modifier une formule sont :
-- setLiteral
-- forgetLiteral
-Il est possible de demander des informations sur une formule avec les fonctions
-- isFalse
-- getUnitClause
-- getPureLiteral
-- getFreeLiteral
+Nous avons conservé la grande majoritée du code du rendu 1. Les modules Formula
+et Formula_wl étant utilisés de manière similaire (Dpll est un functor), nous
+avons pu ajouter l'apprentissage de clause de manière simultanée aux deux versions
+(avec et sans litéraux surveillés).
 
-*************** Version simple **************************
+La seule modification est au niveau du backtrack non-chronologique avec le
+clause learning.
 
-Nous avons choisis de représenter les clauses comme des ensembles de litéraux.
-On implémente les ensembles avec des Set (arbres de recherche).
-Chaque clause est :
-- L'ensemble des litéraux dont la valeur (vrai ou faux) est déjà déterminée
-- L'ensemble des litéraux dont la valeur n'est pas encore déterminée
-- Le nombre de litéraux dont la valeur est vrai.
-On dispose égalemet d'information sur les litéraux :
-- L'état actuel du litéral (vrai | faux | non défini)
-- Le nombre de clauses non satisfaites dans lesquelles le litéral intervient
-- La liste des clauses dans lesquelles le litéral intervient
+Le module Graph permet de generer la clause à apprendre à partir d'une formule fausse.
 
-Avec ces informations il est possible d'implémenter les différentes opérations de manière efficace.
-
-Pour le choix de la variable sur laquelle faire un paris, nous avons choisi de maximiser le nombre
-de clauses non satisfaites dans lesquelles le litéral intervient. L'implémentation est aisée car
-nous avons besoin de cette valeur dans une autre partie de l'algorithme.
-
-*************** Version wl ******************************
-
-Nous représentons les clauses par les informations suivantes :
-* Des informations sur les clauses.
-  - La liste des litéraux de la clause
-  - Les litéraux surveillés dans cette clause (si sa taille est >= 2)
-* Des information sur les litéraux surveillés.
-  - La liste des clauses dans lesquelles le litéral est surveillé
-* Des informations sur les litéraux.
-  - Un booléen égal à vrai ssi le litéral a été mis à vrai
-* Les réponses aux différentes requètes.
-
-Les fonctions setLiteral et forgetLiteral modifient les valeurs des réponses.
-Nous n'avons pas implémenter les litéraux purs à cause du temps de calculs nécessaire
-lors de la rétropropagation, rendant inutile l'optimisation des litéraux surveillés.
-
-Pour le choix de la variable sur laquelle faire un paris, nous commencons par trier les
-variables par nombre d'occurence décroissant et d'utiliser cet ordre par la suite.
 
 *********************************************************
 *                                                       *
-*              PRÉ-TRAITEMENT DE L'ENTRÉE               *
+*                  EXECUTION DU CODE                    *
 *                                                       *
 *********************************************************
 
-Dans le fichier checker.ml la fonctionn check vérifie que le nombre de clauses et
-le nombre de variables est correct et affiche un warning si ce n'et pas le cas.
-Puis supprime les clauses triviales (de la forme "x or not x or P") et affiche un
-message en informant l'utilisateur
+make # Compilation du code
 
-*********************************************************
-*                                                       *
-*               TRACABILITÉ ÉLÉMENTAIRE                 *
-*                                                       *
-*********************************************************
+cd tests
+./tests.sh # Test des exemples basiques
 
-Lancer le programme avec l'option -debug permet d'afficher la formule initiale,
-vérifier que le fichier a bien été parsé et que la formule a bien été initialisée.
-A cause du grand nombre de calculs, nous avons choisis de ne pas afficher les paris et les déductions.
+cd downloads
+make # Récupération de tests plus gros
+cd ..
+
+cd generator
+make # Génération de tests
+cd ..
+
+./tests.sh # Test sur tous les exemples
+nano tests.sh # Ligne 5 : Par défaut le script utilise les options -wl -cl 
 
 *********************************************************
 *                                                       *
@@ -115,22 +79,22 @@ A cause du grand nombre de calculs, nous avons choisis de ne pas afficher les pa
 *                                                       *
 *********************************************************
 
-Le script tests/test.sh permet de lancer l'exécutable sur tous les tests disponibles.
-(Il est possible de rajouter l'option -wl pour utiliser les watched literals)
+Avec l'ajout du clause learning, les temps d'exécution des différentes versions
+ne sont plus comparables. Du plus efficace au moins efficace :
+resol -cl -wl
+resol -cl
+resol
+resol -wl
 
-Sans les watched literals, tous les fichiers tests sont exécutés en moins d'une seconde.
-Avec les watched literals, le premier test (tests/downloads/aim-50-1_6-no-1.cnf) s'exécute en une douzaine de minutes,
-et les dernier (aim-50-6_0-*) s'exécute environ deux fois plus rapidement.
+Nous avions déjà expliqué les différences de performances avec et sans litéraux
+surveillés dans le rendu 1. La petite taille des clauses rend la version sans
+litéraux surveillés plus rapide.
+De plus l'ordre dans lequel les variables sont choisis est beaucoup plus pertinent
+dans la version sans litéraux surveillés.
 
-L'explication pour le premier test est que l'algorithme de base arrive à utiliser
-un grand nombre de fois la propagation de litéraux purs (qui n'a pas été implémenté
-dans la version litéraux surveillés).
-
-Les temps d'exécution varient également car le choix de la prochaine variable est différent dans les deux implémentations.
-
-On ne voit pas d'améliorations significatives car tous les fichier tests que nous utilisons
-possèdent des clauses avec un nombre très limité de litéraux (généralement 3). Les litéraux
-surveillés ont un intérêt lorsque la taille des clauses est suffisament grande.
+Avec l'apprentissage de clause, de grosses clauses sont potentiellement ajoutées ce qui
+favorise la version avec litéraux surveillés. De plus le backtrack non-chronologique
+rend superflu le choix d'un ordre efficace pour les paris sur les variables.
 
 *********************************************************
 *                                                       *
@@ -138,6 +102,11 @@ surveillés ont un intérêt lorsque la taille des clauses est suffisament grand
 *                                                       *
 *********************************************************
 
+Du fait que les différentes version peuvent être meilleures sur certains types de tests
+et moins bonnes sur d'autres, il est difficile de faire une comparaison vraiment cohérente.
+Il faut notamment pouvoir décider du degré de difficulté d'un test. Une idée est de concevoir
+un générateur qui produit des tests de difficulté croissante en fonction d'un paramètre.
+Les deux générateurs actuels sont trop spécifiques et ne sont probablement pas assez représentatifs.
 
 
 *********************************************************
@@ -146,9 +115,10 @@ surveillés ont un intérêt lorsque la taille des clauses est suffisament grand
 *                                                       *
 *********************************************************
 
-Pour la répartition du travail, nous avons commencé par chercher comment organiser de manière modulaire notre code (lundi matin).
-Rémy a commencé par déclarer les différents types et signatures du projet.
-Le solver a été réalisé en majeur partie par Rémy et les modules permettant la manipulation des formules (avec et sans wl) par Simon.
+Nous avons commencé par discuter de la manière dont l'ajout de l'apprentissage de clause pouvait se
+faire dans notre projet. Rémy s'est occupé de la génération du graphe, du calcul de la clause à apprendre, ...
+Simon s'est occupé de l'intégration de ce module dans le code existant, du backtrack non-chronologique ainsi
+que du debug.
 
 Le partage des fichier s'est faite à l'aide du dépôt Git le l'association Aliens.
 

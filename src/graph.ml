@@ -1,5 +1,5 @@
 (** Module implémentant la génération de graphes *)
-
+ 
 (** Module de type Sigs.Solver_type *)
 module Make (F: Sigs.Formula_type) =
 struct
@@ -108,10 +108,13 @@ struct
     
     { adjacencyMatrix = matrix; nodeType = node; nodeLabel = label; learnedClause = !clause; uip = u }
 
+  (** Renvoie la clause apprise *)
   let getLearnedClause graph = graph.learnedClause
   
+  (** Renvoie le premier UIP du graphe *)
   let getUip graph = graph.uip
   
+  (** Exporte un graphe (format dot) dans la sortie out *)
   let export out graph name =
     Printf.fprintf out "digraph %s {\n" name;
     Array.iteri
