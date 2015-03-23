@@ -1,5 +1,5 @@
 (** Module implémentant la génération de graphes *)
-
+ 
 (** Module de type Sigs.Solver_type *)
 module Make (F: Sigs.Formula_type) =
 struct

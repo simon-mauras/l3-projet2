@@ -1,5 +1,5 @@
 (** Module implémentant l'algorithme DPLL *)
-
+ 
 (** Module de type Sigs.Solver_type *)
 module Make : Sigs.Solver_type =
   functor (Formula : Sigs.Formula_type) ->
