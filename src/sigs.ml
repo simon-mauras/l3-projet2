@@ -12,6 +12,16 @@ type certificate = int list
 (** Type d'une solution pour une formule donnée : il peut exister ou non un certificat *)
 type solution = certificate option
 
+(** **)
+
+(** Type de la représentation d'une formule logique quelconque **)
+type 'a formula =
+    And of 'a formula * 'a formula
+  | Or of 'a formula * 'a formula
+  | Imp of 'a formula * 'a formula
+  | Not of 'a formula
+  | Atom of 'a
+
 (** Signature d'un module implémentant la manipulation de litéraux *)
 module type Literal_type =
 sig
@@ -50,13 +60,13 @@ sig
 
   (** Construit une formule (de type t) à partir d'un élément de type cnf *)
   val make: out_channel -> cnf -> t
-  
+
   (** Renvoie le nombre de variables dans la formule *)
   val getNbVariables: t -> int
 
   (** Ajoute une clause à la formule (apprentissage) *)
   val addClause: Literal.t list -> t -> int
-  
+
   (** Affiche une formule et divers informations associées sur une sortie donnée *)
   val print: out_channel -> t -> unit
 
@@ -71,7 +81,7 @@ sig
 
   (** Renvoie le literal et la clause responsable d'une éventuelle contradiction *)
   val getConflict: t -> Literal.t list
-  
+
   (** Renvoie un litéral contenu dans une clause unitaire (sous les hypothèses actuelles) *)
   val getUnitClause: t -> (Literal.t * int) option
 
@@ -79,10 +89,10 @@ sig
   (** Renvoie un litéral dont la négation est absente de la formule (sous les hypothèses actuelles) *)
   val getPureLiteral: t -> Literal.t option
   *)
-  
+
   (** Renvoie un litéral sur lequel aucune hypothèse n'a été faite. *)
   val getFreeLiteral: t -> Literal.t option 
-  
+
   (** Renvoie ue clause à partir de son identifiant. *)
   val getClause: t -> int -> Literal.t list
 end
@@ -100,7 +110,7 @@ module type Solver_type =
     
     (** Active l'apprentissage de clause interactif *)
     val setClauseLearningInteractive: bool -> unit
-    
+
     (** Renvoie une solution à la formule donnée. Des informations de debug peuvent être afficher sur la sortie donnée *)
     val solve: F.t -> solution
   end
