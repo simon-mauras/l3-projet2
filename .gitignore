@@ -2,10 +2,13 @@
 *.cmi
 *.cmx
 *.o
+*.swp
 lexer.ml
 parser.ml
 parser.mli
 resol
 resol.opt
+test_tseitin
 tests/downloads/*.cnf
 tests/generator/*.cnf
+_build
