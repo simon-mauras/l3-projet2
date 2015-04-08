@@ -12,7 +12,7 @@ main:
 
 test_new:
 	$(CC) $(CFLAGS) $(SRC)/$@.native
-	mv $@.native test
+	mv $@.native test_tseitin
 prof:
 	$(CC) $(CFLAGS) $(SRC)/main.p.native
 	mv main.p.native resol.p
