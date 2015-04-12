@@ -2,10 +2,14 @@
  
 (** Module de type Sigs.Solver_type *)
 module Make : Sigs.Solver_type =
-  functor (Formula : Sigs.Formula_type) ->
+  functor (L : Sigs.Literal_type) ->
+  functor (F : Sigs.Formula_type) ->
+  functor (T : Sigs.Theory_type) ->
   struct
-    module Literal = Formula.Literal  
-    module Graph = Graph.Make(Formula)
+    module Formula = F(L)
+    module Theory = T(L)
+    module Literal = L
+    module Graph = Graph.Make(L)(F)
     type assertion = Bet of Literal.t | Deduction of Literal.t
     
     let outDebug = ref stderr
@@ -36,7 +40,9 @@ module Make : Sigs.Solver_type =
       if l = [] then None else Some (List.sort compare l)
 
     (** Renvoie une solution à la formule donnée. Des informations de debug peuvent être afficher sur la sortie donnée *)
-    let solve form =
+    let solve data =
+      let form = Formula.make !outDebug data in
+      let theor = Theory.empty in
       let stack = Stack.create () in
       let currentDeductionLevel = ref 0 in
       let deductionLevel = Array.make (2 * Formula.getNbVariables form) None in
@@ -51,9 +57,12 @@ module Make : Sigs.Solver_type =
       while !continue
       do
         (* On vérifie que les hypothèses actuelles ne rendent pas la formule fausse *)
-        if Formula.isFalse form then
+        match if Formula.isFalse form
+                then Formula.getConflict form
+                else Theory.getContradiction theor
+        with
+        | Some conflict ->
           begin
-          
             if !interactive then begin
               print_endline "Conflict found.";
               print_endline "- g : export .dot file with the conflict graph.";
@@ -64,7 +73,7 @@ module Make : Sigs.Solver_type =
                 match read_line () with
                 | "g" ->
                   let outGraph = open_out "graph.dot" in
-                  let graph = Graph.make form deductionCause deductionLevel !currentDeductionLevel in
+                  let graph = Graph.make conflict form deductionCause deductionLevel !currentDeductionLevel in
                   Graph.export outGraph graph "G";
                   close_out outGraph;
                   Printf.printf "Learned clause :";
@@ -82,12 +91,9 @@ module Make : Sigs.Solver_type =
             let learnedClause = ref 0 in
             if clauseLearning then begin
               incr statClauseLearning;
-              let graph = Graph.make form deductionCause deductionLevel !currentDeductionLevel in
+              let graph = Graph.make conflict form deductionCause deductionLevel !currentDeductionLevel in
               let clause = Graph.getLearnedClause graph in
               let uip = Graph.getUip graph in
-              let uipBet = ref false in
-              Stack.iter (function Bet x -> if x = uip then uipBet := true
-                           | Deduction x -> if x = uip then uipBet := false) stack;
               
               let lvl = List.fold_left (fun maxi l -> let id = Literal.id_of_literal (Literal.neg l) in
                                                       match deductionLevel.(id) with
@@ -157,7 +163,7 @@ module Make : Sigs.Solver_type =
             end else unstack();
             
           end
-        else
+        | None ->
           begin
             (* 1 : On commence par simplifier la formule *)
             let modif = ref false in
@@ -171,14 +177,6 @@ module Make : Sigs.Solver_type =
                Stack.push (Deduction x) stack;
                deductionCause.(Literal.id_of_literal x) <- Some i;
                deductionLevel.(Literal.id_of_literal x) <- Some !currentDeductionLevel);
-            (*(* Propagation des litétaux purs *)
-            (match Formula.getPureLiteral form with
-             | None -> ()
-             | Some x ->
-               incr statPureLiteral;
-               modif := true;
-               Formula.setLiteral x form;
-               Stack.push (Deduction x) stack);*)
             (* 2 : On parie sur un litéral si aucune modification n'a été faite *)
             if not !modif then
               (match Formula.getFreeLiteral form with

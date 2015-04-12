@@ -1,0 +1,46 @@
+digraph G {
+"-21" [style=filled,color=blue]
+"-27" [color=black]
+"55" [style=filled,color=blue]
+"-70" [style=filled,color=blue]
+"74" [style=filled,color=purple]
+"83" [style=filled,color=blue]
+"-97" [style=filled,color=purple]
+"-117" [style=filled,color=yellow]
+"-120" [color=black]
+"121" [style=filled,color=blue]
+"126" [style=filled,color=blue]
+"-135" [style=filled,color=purple]
+"-144" [style=filled,color=blue]
+"-160" [color=black]
+"-161" [style=filled,color=purple]
+"183" [style=filled,color=purple]
+"Conflict" [style=filled,color=red]
+"-21" -> "126";
+"-27" -> "-97";
+"55" -> "-70";
+"55" -> "-144";
+"-70" -> "121";
+"74" -> "-97";
+"74" -> "Conflict";
+"83" -> "55";
+"83" -> "-70";
+"83" -> "-144";
+"-97" -> "Conflict";
+"-117" -> "-135";
+"-117" -> "-161";
+"-120" -> "-117";
+"-120" -> "-135";
+"121" -> "-117";
+"126" -> "55";
+"126" -> "83";
+"-135" -> "-161";
+"-135" -> "183";
+"-144" -> "121";
+"-160" -> "83";
+"-160" -> "126";
+"-161" -> "74";
+"-161" -> "183";
+"183" -> "74";
+"183" -> "Conflict";
+}

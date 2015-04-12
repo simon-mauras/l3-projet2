@@ -1,13 +1,13 @@
-module Formula = Formula.Make (Literal2.Make)
-module Formula_wl = Formula_wl.Make (Literal2.Make)
-module Solver = Dpll.Make(Formula)
-module Solver_wl = Dpll.Make(Formula_wl)
+module Solver = Dpll.Make (Literal2.Make) (Formula.Make) (Theory_default.Make)
+module Solver_wl = Dpll.Make (Literal2.Make) (Formula_wl.Make) (Theory_default.Make)
 
 (* Message affichés par le parser de la ligne de commande *)
 let usage_msg = "Usage: ./resol <options> input_file <output_file>"
 let version = "SAT-solver v1. Remy Grunblatt & Simon Mauras"
 
 (* Arguments (ligne de commande *)
+type mode = Cnf_mode | Tseitin_mode | Equality_mode | Congruence_mode | Difference_mode
+let arg_mode = ref Cnf_mode
 let arg_debug = ref false
 let arg_wl = ref false
 let arg_cl = ref false
@@ -20,6 +20,11 @@ let doc = [("-wl", Arg.Set arg_wl, "Use watched literals to compute satisfiabili
            ("-cl", Arg.Set arg_cl, "Use clause learning");
            ("-cl-interac", Arg.Set arg_clinterac, "Use interactive mode for clauses learning");
            ("-debug", Arg.Set arg_debug, "Print debug informations");
+           ("-cnf", Arg.Unit (fun () -> arg_mode := Cnf_mode), "Use cnf mode");
+           ("-tseitin", Arg.Unit (fun () -> arg_mode := Tseitin_mode), "Use tseitin mode");
+           ("-equality", Arg.Unit (fun () -> arg_mode := Equality_mode), "Use equality mode");
+           ("-congruence", Arg.Unit (fun () -> arg_mode := Congruence_mode), "Use congruence mode");
+           ("-difference", Arg.Unit (fun () -> arg_mode := Difference_mode), "Use difference mode");
            ("-version", Arg.Unit (fun () -> print_endline version; exit 0), "Print version and exit")]
 
 (* Fonction appelée par le parser de la ligne de commande *)
@@ -31,7 +36,10 @@ let add_file s =
   else (prerr_string "Warning: File '"; prerr_string s; prerr_string "' ignored.\n") 
 
 (* Parse l'entrée et renvoie une valeur de type Sigs.cnf *)
-let parse lexbuf = Parser.formula Lexer.main lexbuf
+let parse lexbuf =
+  match !arg_mode with
+  | Cnf_mode -> Parser.formula Lexer.main lexbuf
+  | _ -> failwith "Not implemented yet..."
 
 (* Fonction principale *)
 let main () =
@@ -49,17 +57,15 @@ let main () =
       let data = Checker.check stderr (parse lexbuf) in
 
       let s = if !arg_wl then (
-          let form = Formula_wl.make stderr data in
           Solver_wl.setDebug !arg_debug;
           Solver_wl.setClauseLearning !arg_cl;
           Solver_wl.setClauseLearningInteractive !arg_clinterac;
-          Solver_wl.solve form)
+          Solver_wl.solve data)
         else (
-          let form = Formula.make stderr data in
           Solver.setDebug !arg_debug;
           Solver.setClauseLearning !arg_cl;
           Solver.setClauseLearningInteractive !arg_clinterac;
-          Solver.solve form) in
+          Solver.solve data) in
 
       match s with
       | None -> output_string output "s UNSATISFIABLE\n"

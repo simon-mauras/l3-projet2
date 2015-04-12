@@ -4,7 +4,7 @@ CFLAGS := -tag thread -use-menhir -r -I $(SRC)
 
 .PHONY: all mproper
 
-all: main test_new
+all: main
 
 main:
 	$(CC) $(CFLAGS) $(SRC)/$@.native

@@ -1,11 +1,11 @@
 (** Module implémentant la génération de graphes *)
  
 (** Module de type Sigs.Solver_type *)
-module Make (F: Sigs.Formula_type) =
+module Make (L: Sigs.Literal_type) (F: Sigs.Formula_type) =
 struct
 
-  module Formula = F
-  module Literal = F.Literal
+  module Literal = L
+  module Formula = F(L)
 
   type node = Blue | Yellow | Purple | Red | White | Invisible
   
@@ -19,7 +19,7 @@ struct
   }
   
   (** Construit un graphe (de type t) à partir d'un tableau de litéraux (un noeud par litéral) en y ajoutant un symbole d'absurdité *)
-  let make formula deductionCause deductionLevel currentDeductionLevel =
+  let make conflict formula deductionCause deductionLevel currentDeductionLevel =
   
     let n = 2 * Formula.getNbVariables formula in
     let matrix = Array.make_matrix (n+1) (n+1) false in
@@ -50,7 +50,6 @@ struct
            topSort := i::!topSort;
       in
     
-    let conflict = Formula.getConflict formula in
     List.iter (fun l -> let id = Literal.id_of_literal (Literal.neg l) in
                         explore id;
                         matrix.(id).(n) <- true) conflict;
