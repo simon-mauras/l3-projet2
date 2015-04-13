@@ -33,13 +33,22 @@ let add_file s =
   then arg_input := s
   else if !arg_output = ""
   then arg_output := s
-  else (prerr_string "Warning: File '"; prerr_string s; prerr_string "' ignored.\n") 
+  else (prerr_string "Warning: File '"; prerr_string s; prerr_string "' ignored.\n")
 
-(* Parse l'entrée et renvoie une valeur de type Sigs.cnf *)
-let parse lexbuf =
-  match !arg_mode with
-  | Cnf_mode -> Parser.formula Lexer.main lexbuf
-  | _ -> failwith "Not implemented yet..."
+
+let rec affiche formula =
+  match formula with
+  |Sigs.And(a, b) -> Printf.printf "("; affiche a; Printf.printf " AND "; affiche b; Printf.printf ")";
+  |Sigs.Or(a, b) -> Printf.printf "("; affiche a; Printf.printf " OR "; affiche b; Printf.printf ")";
+  |Sigs.Imp(a, b) -> Printf.printf "("; affiche a; Printf.printf " => "; affiche b; Printf.printf ")";
+  |Sigs.Not(a) -> Printf.printf " NOT ("; affiche a; Printf.printf ")";
+  |Sigs.Atom(a) -> Printf.printf "X";;
+
+(* Parse l'entrée *)
+let parse_cnf lexbuf = Checker.check stderr (Parser.formula Lexer.main lexbuf)
+let parse_equ lexbuf = Parser_equ.main Lexer_equ.main lexbuf
+let parse_congr lexbuf = Parser_congr.main Lexer_congr.main lexbuf
+let parse_diff lexbuf = Parser_diff.main Lexer_diff.main lexbuf
 
 (* Fonction principale *)
 let main () =
@@ -54,7 +63,7 @@ let main () =
         else stdout in
       
       let lexbuf = Lexing.from_channel input in
-      let data = Checker.check stderr (parse lexbuf) in
+      let data = parse_cnf lexbuf in
 
       let s = if !arg_wl then (
           Solver_wl.setDebug !arg_debug;

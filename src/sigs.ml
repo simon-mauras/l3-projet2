@@ -12,9 +12,33 @@ type certificate = int list
 (** Type d'une solution pour une formule donnée : il peut exister ou non un certificat *)
 type solution = certificate option
 
+module Equality =
+  struct
+    type var = string
+    type term = X of var
+    type atom = Eq of term * term | Neq of term * term
+  end
+
+module Congruence =
+  struct
+    type var = string
+    type term = X of var | Fun of var * term list
+    type atom = Eq of term * term | Neq of term * term
+  end
+
+module Difference =
+  struct
+    type var = string
+    type term = X of var
+    type op = Lt | Gt | Leq | Geq | Eq | Neq
+    type atom =
+      | Ternary of term * term * op * int (* xi - xj op n *)
+      | Binary of term * op * int (* xi op n *)
+  end
+
 (** Type de la représentation d'une formule logique quelconque **)
 type 'a formula =
-    And of 'a formula * 'a formula
+  | And of 'a formula * 'a formula
   | Or of 'a formula * 'a formula
   | Imp of 'a formula * 'a formula
   | Not of 'a formula
