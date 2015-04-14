@@ -16,14 +16,16 @@ module Equality =
   struct
     type var = string
     type term = X of var
-    type atom = Eq of term * term | Neq of term * term
+    type t = Eq of term * term | Neq of term * term
+    let compare = Pervasives.compare
   end
 
 module Congruence =
   struct
     type var = string
     type term = X of var | Fun of var * term list
-    type atom = Eq of term * term | Neq of term * term
+    type t = Eq of term * term | Neq of term * term
+    let compare = Pervasives.compare
   end
 
 module Difference =
@@ -31,9 +33,10 @@ module Difference =
     type var = string
     type term = X of var
     type op = Lt | Gt | Leq | Geq | Eq | Neq
-    type atom =
+    type t =
       | Ternary of term * term * op * int (* xi - xj op n *)
       | Binary of term * op * int (* xi op n *)
+    let compare = Pervasives.compare
   end
 
 (** Type de la représentation d'une formule logique quelconque **)
@@ -149,6 +152,6 @@ module type Solver_type =
     val setClauseLearningInteractive: bool -> unit
 
     (** Renvoie une solution à la formule donnée. Des informations de debug peuvent être afficher sur la sortie donnée *)
-    val solve: cnf -> solution
+    val solve: cnf -> 'a option array -> solution
   end
 

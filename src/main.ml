@@ -1,3 +1,5 @@
+module Tseitin_tseitin = Tseitin.Make(String)
+module Tseitin_equality = Tseitin.Make(Sigs.Equality)
 module Solver = Dpll.Make (Literal2.Make) (Formula.Make) (Theory_default.Make)
 module Solver_wl = Dpll.Make (Literal2.Make) (Formula_wl.Make) (Theory_default.Make)
 
@@ -36,19 +38,21 @@ let add_file s =
   else (prerr_string "Warning: File '"; prerr_string s; prerr_string "' ignored.\n")
 
 
-let rec affiche formula =
-  match formula with
-  |Sigs.And(a, b) -> Printf.printf "("; affiche a; Printf.printf " AND "; affiche b; Printf.printf ")";
-  |Sigs.Or(a, b) -> Printf.printf "("; affiche a; Printf.printf " OR "; affiche b; Printf.printf ")";
-  |Sigs.Imp(a, b) -> Printf.printf "("; affiche a; Printf.printf " => "; affiche b; Printf.printf ")";
-  |Sigs.Not(a) -> Printf.printf " NOT ("; affiche a; Printf.printf ")";
-  |Sigs.Atom(a) -> Printf.printf "X";;
+let affiche formula tab =
+let rec affiche = function
+  | Sigs.And(a, b) -> Printf.printf "("; affiche a; Printf.printf " AND "; affiche b; Printf.printf ")";
+  | Sigs.Or(a, b) -> Printf.printf "("; affiche a; Printf.printf " OR "; affiche b; Printf.printf ")";
+  | Sigs.Imp(a, b) -> Printf.printf "("; affiche a; Printf.printf " => "; affiche b; Printf.printf ")";
+  | Sigs.Not(a) -> Printf.printf "NOT ("; affiche a; Printf.printf ")";
+  | Sigs.Atom(a) -> Array.iteri (fun i x -> if x = Some a then Printf.printf "[%d]" i) tab in
+  affiche formula
 
 (* Parse l'entrée *)
 let parse_cnf lexbuf = Checker.check stderr (Parser.formula Lexer.main lexbuf)
-let parse_equ lexbuf = Parser_equ.main Lexer_equ.main lexbuf
-let parse_congr lexbuf = Parser_congr.main Lexer_congr.main lexbuf
-let parse_diff lexbuf = Parser_diff.main Lexer_diff.main lexbuf
+let parse_tseitin lexbuf = Parser_tseitin.main Lexer_tseitin.main lexbuf
+let parse_equality lexbuf = Parser_equality.main Lexer_equality.main lexbuf
+let parse_congruence lexbuf = Parser_congruence.main Lexer_congruence.main lexbuf
+let parse_difference lexbuf = Parser_difference.main Lexer_difference.main lexbuf
 
 (* Fonction principale *)
 let main () =
@@ -63,18 +67,24 @@ let main () =
         else stdout in
       
       let lexbuf = Lexing.from_channel input in
-      let data = parse_cnf lexbuf in
-
+      let data, tab = match !arg_mode with
+        | Cnf_mode -> (parse_cnf lexbuf, Array.make 0 None)
+        | Tseitin_mode -> Tseitin_tseitin.make (parse_tseitin lexbuf)
+        (*| Equality_mode -> Tseitin_equality.make (parse_equality lexbuf)*)
+        (*| Congruence_mode -> Tseitin_congruence.make (parse_congruence lexbuf)*)
+        (*| Difference_mode -> Tseitin_difference.make (parse_difference lexbuf)*)
+        | _ -> failwith "Not implemented yet !" in
+      
       let s = if !arg_wl then (
           Solver_wl.setDebug !arg_debug;
           Solver_wl.setClauseLearning !arg_cl;
           Solver_wl.setClauseLearningInteractive !arg_clinterac;
-          Solver_wl.solve data)
+          Solver_wl.solve data tab)
         else (
           Solver.setDebug !arg_debug;
           Solver.setClauseLearning !arg_cl;
           Solver.setClauseLearningInteractive !arg_clinterac;
-          Solver.solve data) in
+          Solver.solve data tab) in
 
       match s with
       | None -> output_string output "s UNSATISFIABLE\n"

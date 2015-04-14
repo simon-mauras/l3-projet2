@@ -1,5 +1,5 @@
 {
-open Parser_congr;;
+open Parser_congruence;;
 }
 
 rule main = parse

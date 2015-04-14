@@ -40,7 +40,7 @@ module Make : Sigs.Solver_type =
       if l = [] then None else Some (List.sort compare l)
 
     (** Renvoie une solution à la formule donnée. Des informations de debug peuvent être afficher sur la sortie donnée *)
-    let solve data =
+    let solve data tab =
       let form = Formula.make !outDebug data in
       let theor = Theory.empty in
       let stack = Stack.create () in

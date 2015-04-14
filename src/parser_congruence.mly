@@ -17,7 +17,7 @@ open Sigs
 %left OR AND
 %nonassoc NOT
 
-%type <Sigs.Congruence.atom Sigs.formula> main
+%type <Sigs.Congruence.t Sigs.formula> main
 
 %start main
 %%

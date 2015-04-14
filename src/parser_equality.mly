@@ -17,7 +17,7 @@ open Sigs
 %left OR AND
 %nonassoc NOT
 
-%type <Sigs.Equality.atom Sigs.formula> main
+%type <Sigs.Equality.t Sigs.formula> main
 
 %start main
 %%

@@ -1,10 +1,15 @@
 {
-open Parser_equ;;
+open Parser_difference;;
 }
 
 rule main = parse
   | [' ' '\t' '\n']              { main lexbuf }
+  | '-' ? ['0'-'9']+ as s        { INT (int_of_string s) }
   | ['a'-'z' 'A'-'Z' '_']+ as s  { IDENT s }
+  | "<"                          { LT }
+  | ">"                          { GT }
+  | "<="                         { LEQ }
+  | ">="                         { GEQ }
   | "="                          { EQ }
   | "!="                         { NEQ }
   | "\\/"                        { OR }

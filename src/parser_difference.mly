@@ -23,7 +23,7 @@ open Sigs
 %left OR AND
 %nonassoc NOT
 
-%type <Sigs.Difference.atom Sigs.formula> main
+%type <Sigs.Difference.t Sigs.formula> main
 
 %start main
 %%
