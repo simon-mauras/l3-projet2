@@ -1,8 +1,3 @@
-module Tseitin_tseitin = Tseitin.Make(String)
-module Tseitin_equality = Tseitin.Make(Sigs.Equality)
-module Solver = Dpll.Make (Literal2.Make) (Formula.Make) (Theory_default.Make)
-module Solver_wl = Dpll.Make (Literal2.Make) (Formula_wl.Make) (Theory_default.Make)
-
 (* Message affichés par le parser de la ligne de commande *)
 let usage_msg = "Usage: ./resol <options> input_file <output_file>"
 let version = "SAT-solver v1. Remy Grunblatt & Simon Mauras"
@@ -37,22 +32,69 @@ let add_file s =
   then arg_output := s
   else (prerr_string "Warning: File '"; prerr_string s; prerr_string "' ignored.\n")
 
+module type Mode_type =
+  sig
+    module T : Map.OrderedType
+    module Theory : Sigs.Theory_type
+    val parse : Lexing.lexbuf -> Sigs.cnf * T.t option array
+  end
 
-let affiche formula tab =
-let rec affiche = function
-  | Sigs.And(a, b) -> Printf.printf "("; affiche a; Printf.printf " AND "; affiche b; Printf.printf ")";
-  | Sigs.Or(a, b) -> Printf.printf "("; affiche a; Printf.printf " OR "; affiche b; Printf.printf ")";
-  | Sigs.Imp(a, b) -> Printf.printf "("; affiche a; Printf.printf " => "; affiche b; Printf.printf ")";
-  | Sigs.Not(a) -> Printf.printf "NOT ("; affiche a; Printf.printf ")";
-  | Sigs.Atom(a) -> Array.iteri (fun i x -> if x = Some a then Printf.printf "[%d]" i) tab in
-  affiche formula
+module Mode_cnf =
+  struct
+    module T = String
+    module Theory = Theory_default.Make
+    let parse lexbuf = (Checker.check stderr (Parser.formula Lexer.main lexbuf), Array.make 0 None)
+  end
 
-(* Parse l'entrée *)
-let parse_cnf lexbuf = Checker.check stderr (Parser.formula Lexer.main lexbuf)
-let parse_tseitin lexbuf = Parser_tseitin.main Lexer_tseitin.main lexbuf
-let parse_equality lexbuf = Parser_equality.main Lexer_equality.main lexbuf
-let parse_congruence lexbuf = Parser_congruence.main Lexer_congruence.main lexbuf
-let parse_difference lexbuf = Parser_difference.main Lexer_difference.main lexbuf
+module Mode_tseitin =
+  struct
+    module T = String
+    module Theory = Theory_default.Make
+    module Tseitin = Tseitin.Make(T)
+    let parse lexbuf = Tseitin.make (Parser_tseitin.main Lexer_tseitin.main lexbuf)
+  end
+
+module Mode_equality =
+  struct
+    module T = Sigs.Equality
+    module Theory = Theory_default.Make
+    module Tseitin = Tseitin.Make(T)
+    let parse lexbuf = Tseitin.make (Parser_equality.main Lexer_equality.main lexbuf)
+  end
+  
+module Mode_congruence =
+  struct
+    module T = Sigs.Congruence
+    module Theory = Theory_default.Make
+    module Tseitin = Tseitin.Make(T)
+    let parse lexbuf = Tseitin.make (Parser_congruence.main Lexer_congruence.main lexbuf)
+  end
+  
+module Mode_difference =
+  struct
+    module T = Sigs.Difference
+    module Theory = Theory_default.Make
+    module Tseitin = Tseitin.Make(T)
+    let parse lexbuf = Tseitin.make (Parser_difference.main Lexer_difference.main lexbuf)
+  end
+
+module Main =
+  functor (F : Sigs.Formula_type) ->
+  functor (M : Mode_type) ->
+  struct
+    module Solver = Dpll.Make (Literal2.Make) (F) (M.Theory)
+    let main input output =
+      let lexbuf = Lexing.from_channel input in
+      let data, tab = M.parse lexbuf in
+      Solver.setDebug !arg_debug;
+      Solver.setClauseLearning !arg_cl;
+      Solver.setClauseLearningInteractive !arg_clinterac;
+      match Solver.solve data tab with
+      | None -> output_string output "s UNSATISFIABLE\n"
+      | Some l -> output_string output "s SATISFIABLE\n";
+        List.iter (Printf.fprintf output "%d ") l;
+        Printf.fprintf output "0\n"
+  end
 
 (* Fonction principale *)
 let main () =
@@ -65,32 +107,17 @@ let main () =
       let output = if !arg_output <> ""
         then open_out !arg_output
         else stdout in
-      
-      let lexbuf = Lexing.from_channel input in
-      let data, tab = match !arg_mode with
-        | Cnf_mode -> (parse_cnf lexbuf, Array.make 0 None)
-        | Tseitin_mode -> Tseitin_tseitin.make (parse_tseitin lexbuf)
-        (*| Equality_mode -> Tseitin_equality.make (parse_equality lexbuf)*)
-        (*| Congruence_mode -> Tseitin_congruence.make (parse_congruence lexbuf)*)
-        (*| Difference_mode -> Tseitin_difference.make (parse_difference lexbuf)*)
-        | _ -> failwith "Not implemented yet !" in
-      
-      let s = if !arg_wl then (
-          Solver_wl.setDebug !arg_debug;
-          Solver_wl.setClauseLearning !arg_cl;
-          Solver_wl.setClauseLearningInteractive !arg_clinterac;
-          Solver_wl.solve data tab)
-        else (
-          Solver.setDebug !arg_debug;
-          Solver.setClauseLearning !arg_cl;
-          Solver.setClauseLearningInteractive !arg_clinterac;
-          Solver.solve data tab) in
-
-      match s with
-      | None -> output_string output "s UNSATISFIABLE\n"
-      | Some l -> output_string output "s SATISFIABLE\n";
-        List.iter (Printf.fprintf output "%d ") l;
-        Printf.fprintf output "0\n"
+      match !arg_wl, !arg_mode with
+      | true, Cnf_mode        -> let module M = Main (Formula_wl.Make) (Mode_cnf) in M.main input output
+      | true, Tseitin_mode    -> let module M = Main (Formula_wl.Make) (Mode_tseitin) in M.main input output
+      | true, Equality_mode   -> let module M = Main (Formula_wl.Make) (Mode_equality) in M.main input output
+      | true, Congruence_mode -> let module M = Main (Formula_wl.Make) (Mode_congruence) in M.main input output
+      | true, Difference_mode -> let module M = Main (Formula_wl.Make) (Mode_difference) in M.main input output
+      | false, Cnf_mode        -> let module M = Main (Formula.Make) (Mode_cnf) in M.main input output
+      | false, Tseitin_mode    -> let module M = Main (Formula.Make) (Mode_tseitin) in M.main input output
+      | false, Equality_mode   -> let module M = Main (Formula.Make) (Mode_equality) in M.main input output
+      | false, Congruence_mode -> let module M = Main (Formula.Make) (Mode_congruence) in M.main input output
+      | false, Difference_mode -> let module M = Main (Formula.Make) (Mode_difference) in M.main input output
     with
     | Sys_error s -> prerr_endline s (* no such file or directory, ... *)
   end
