@@ -1,15 +1,15 @@
 (** Module implémentant l'algorithme DPLL *)
  
+module Literal = Sigs.Literal
+ 
 (** Module de type Sigs.Solver_type *)
 module Make : Sigs.Solver_type =
-  functor (L : Sigs.Literal_type) ->
   functor (F : Sigs.Formula_type) ->
   functor (T : Sigs.Theory_type) ->
   struct
-    module Formula = F(L)
-    module Theory = T(L)
-    module Literal = L
-    module Graph = Graph.Make(L)(F)
+    module Formula = F
+    module Theory = T
+    module Graph = Graph.Make(F)
     type assertion = Bet of Literal.t | Deduction of Literal.t
     
     let outDebug = ref stderr
@@ -42,7 +42,7 @@ module Make : Sigs.Solver_type =
     (** Renvoie une solution à la formule donnée. Des informations de debug peuvent être afficher sur la sortie donnée *)
     let solve data tab =
       let form = Formula.make !outDebug data in
-      let theor = Theory.empty in
+      let theor = Theory.make tab in
       let stack = Stack.create () in
       let currentDeductionLevel = ref 0 in
       let deductionLevel = Array.make (2 * Formula.getNbVariables form) None in

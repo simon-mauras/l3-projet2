@@ -1,7 +1,7 @@
 (** Module permettant de manipuler les litéraux *)
 
 (** Module de type Literal_type *)
-module Make: Sigs.Literal_type =
+module Make =
 struct
 
   (** Type d'un literal *)

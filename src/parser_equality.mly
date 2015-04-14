@@ -1,5 +1,6 @@
 %{
 open Sigs
+open Sigs.Data.Equality
 %}
 
 %token <string> IDENT
@@ -17,7 +18,7 @@ open Sigs
 %left OR AND
 %nonassoc NOT
 
-%type <Sigs.Equality.t Sigs.formula> main
+%type <Sigs.parsing Sigs.formula> main
 
 %start main
 %%
@@ -37,17 +38,17 @@ formula:
       { Imp (f1, f2) }
   | NOT f = formula
       { Not f }
-  | a = atom { Atom a }
-;
-
-atom:
-  | t1 = term EQ t2 = term
-      { Equality.Eq (t1, t2) }
-  | t1 = term NEQ t2 = term
-      { Equality.Neq (t1, t2) }
+  | a = term { Atom (Parsing_equality a) }
 ;
 
 term:
+  | t1 = atom EQ t2 = atom
+      { Eq (t1, t2) }
+  | t1 = atom NEQ t2 = atom
+      { Neq (t1, t2) }
+;
+
+atom:
   | x = IDENT
-      { Equality.X x }
+      { X x }
 ;

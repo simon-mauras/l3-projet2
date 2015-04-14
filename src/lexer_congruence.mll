@@ -13,5 +13,6 @@ rule main = parse
   | "~"                          { NOT }
   | "("                          { LPAREN }
   | ")"                          { RPAREN }
+  | ","                          { COMMA }
   | eof                          { EOF }
 

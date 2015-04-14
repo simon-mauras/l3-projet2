@@ -1,5 +1,6 @@
 %{
 open Sigs
+open Sigs.Data.Congruence
 %}
 
 %token <string> IDENT
@@ -11,13 +12,14 @@ open Sigs
 %token NOT
 %token LPAREN
 %token RPAREN
+%token COMMA
 %token EOF
 
 %left IMP
 %left OR AND
 %nonassoc NOT
 
-%type <Sigs.Congruence.t Sigs.formula> main
+%type <Sigs.parsing Sigs.formula> main
 
 %start main
 %%
@@ -37,26 +39,26 @@ formula:
       { Imp (f1, f2) }
   | NOT f = formula
       { Not f }
-  | a = atom { Atom a }
+  | a = atom { Atom (Parsing_congruence a) }
 ;
 
 atom:
   | t1 = term EQ t2 = term
-      { Congruence.Eq (t1, t2) }
+      { Eq (t1, t2) }
   | t1 = term NEQ t2 = term
-      { Congruence.Neq (t1, t2) }
+      { Neq (t1, t2) }
 ;
 
 term:
   | f = IDENT LPAREN lst = term_list RPAREN
-      { Congruence.Fun (f, lst) }
+      { Fun (f, lst) }
   | x = IDENT
-      { Congruence.X x }
+      { X x }
 ;
 
 term_list:
-  | s = IDENT
-      { [ Congruence.X s ] }
-  | s = IDENT lst = term_list
-      { (Congruence.X s)::lst }
+  | t = term
+      { [ t ] }
+  | t = term COMMA lst = term_list
+      { t::lst }
 ;

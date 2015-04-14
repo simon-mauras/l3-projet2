@@ -1,5 +1,6 @@
 %{
 open Sigs
+open Sigs.Data.Default
 %}
 
 %token <string> IDENT
@@ -15,7 +16,7 @@ open Sigs
 %left OR AND
 %nonassoc NOT
 
-%type <string Sigs.formula> main
+%type <Sigs.parsing Sigs.formula> main
 
 %start main
 %%
@@ -35,5 +36,5 @@ formula:
       { Imp (f1, f2) }
   | NOT f = formula
       { Not f }
-  | a = IDENT { Atom a }
+  | a = IDENT { Atom (Parsing_default a) }
 ;

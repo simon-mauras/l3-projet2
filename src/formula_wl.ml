@@ -1,16 +1,15 @@
 (** Module permettant la manipulation de formules sous forme normale conjonctive avec le litéraux surveillés *)
-  
+
+module L = Sigs.Literal
+
 (** Module de type Sigs.Formla_type *)
 module Make : Sigs.Formula_type =
-  functor (L : Sigs.Literal_type) ->
   struct
-
-    module Literal = L
 
     (** Informations sur les clauses. Le tableau contient pour chaque clause :
         - La liste des litéraux de la clause
         - Les itéraux surveillés dans cette clause (si sa taille est >= 2) *)
-    type clausesArray = (Literal.t list * Literal.t option * Literal.t option) Vector.vector
+    type clausesArray = (L.t list * L.t option * L.t option) Vector.vector
 
     (** Information sur les litéraux surveillés.
         Le tableau contient pour chaque literal la liste des clauses dans lesquelles il est surveillé *)
@@ -22,9 +21,9 @@ module Make : Sigs.Formula_type =
 
     (** Réponses aux différentes requetes. Cela permet d'éviter un grand nombre de calculs redondants *)
     type requestAnswer = {
-      mutable unitClauses : (Literal.t * int) list;
-      mutable pureLiterals : Literal.t list;
-      mutable freeLiterals : Literal.t list;
+      mutable unitClauses : (L.t * int) list;
+      mutable pureLiterals : L.t list;
+      mutable freeLiterals : L.t list;
       mutable conflict : int option
     }
 
@@ -36,10 +35,10 @@ module Make : Sigs.Formula_type =
       let nbOccur = Array.make (2*nb_vars) 0 in
       let rec literalList = function
         | 0 -> []
-        | n -> (Literal.make n)::(literalList (n-1)) in
+        | n -> (L.make n)::(literalList (n-1)) in
       let compare x y =
-        let vx = nbOccur.(Literal.id_of_literal x) + nbOccur.(Literal.id_of_literal (Literal.neg x)) in
-        let vy = nbOccur.(Literal.id_of_literal y) + nbOccur.(Literal.id_of_literal (Literal.neg y)) in
+        let vx = nbOccur.(L.id_of_literal x) + nbOccur.(L.id_of_literal (L.neg x)) in
+        let vy = nbOccur.(L.id_of_literal y) + nbOccur.(L.id_of_literal (L.neg y)) in
         vx - vy in
       let watchedLiterals = Array.make (2*nb_vars) [] in
 
@@ -54,8 +53,8 @@ module Make : Sigs.Formula_type =
 
       let tabClauses = Vector.of_list (List.mapi (fun i l ->
           let lst = List.map (fun a ->
-              let x = Literal.make a in
-              nbOccur.(Literal.id_of_literal x) <- nbOccur.(Literal.id_of_literal x) + 1;
+              let x = L.make a in
+              nbOccur.(L.id_of_literal x) <- nbOccur.(L.id_of_literal x) + 1;
               x) l in
           match lst with
           | [] ->
@@ -63,11 +62,11 @@ module Make : Sigs.Formula_type =
             (lst, None, None)
           | x::[] ->
             answers.unitClauses <- (x,i)::answers.unitClauses;
-            watchedLiterals.(Literal.id_of_literal x) <- i::watchedLiterals.(Literal.id_of_literal x);
+            watchedLiterals.(L.id_of_literal x) <- i::watchedLiterals.(L.id_of_literal x);
             (lst, Some x, None)
           | x::y::_->
-            watchedLiterals.(Literal.id_of_literal x) <- i::watchedLiterals.(Literal.id_of_literal x);
-            watchedLiterals.(Literal.id_of_literal y) <- i::watchedLiterals.(Literal.id_of_literal y);
+            watchedLiterals.(L.id_of_literal x) <- i::watchedLiterals.(L.id_of_literal x);
+            watchedLiterals.(L.id_of_literal y) <- i::watchedLiterals.(L.id_of_literal y);
             (lst, Some x, Some y)) clauses) in
 
       answers.freeLiterals <- List.sort compare (literalList nb_vars);
@@ -87,28 +86,28 @@ module Make : Sigs.Formula_type =
                             (cl, None, None)
                           | x::[] ->
                             answers.unitClauses <- (x,id)::answers.unitClauses;
-                            watchedLiterals.(Literal.id_of_literal x) <- id::watchedLiterals.(Literal.id_of_literal x);
+                            watchedLiterals.(L.id_of_literal x) <- id::watchedLiterals.(L.id_of_literal x);
                             (cl, Some x, None)
                           | x::y::_->
-                            watchedLiterals.(Literal.id_of_literal x) <- id::watchedLiterals.(Literal.id_of_literal x);
-                            watchedLiterals.(Literal.id_of_literal y) <- id::watchedLiterals.(Literal.id_of_literal y);
+                            watchedLiterals.(L.id_of_literal x) <- id::watchedLiterals.(L.id_of_literal x);
+                            watchedLiterals.(L.id_of_literal y) <- id::watchedLiterals.(L.id_of_literal y);
                             (cl, Some x, Some y));
       id (* On retourne l'identifiant de la nouvelle clause *)
 
     (** Affiche la formule et divers informations associées sur la sortie out *)
     let print out formula = 
       let (clauses, watchedLiterals, literals, answers) = formula in
-      let f x = Literal.print out x; output_string out " " in
-      let f2 (x,_) = Literal.print out x; output_string out " " in
+      let f x = L.print out x; output_string out " " in
+      let f2 (x,_) = L.print out x; output_string out " " in
       output_string out "----------- Clauses ------------\n";
       Vector.iter (function l, a, b ->
           List.iter (fun x ->
               if a = Some x || b = Some x then begin
                 output_string out "[";
-                Literal.print out x;
+                L.print out x;
                 output_string out "] ";
               end else begin
-                Literal.print out x;
+                L.print out x;
                 output_string out " ";
               end) l;
           output_string out "\n") clauses;
@@ -127,12 +126,12 @@ module Make : Sigs.Formula_type =
     (** Ajoute à la formule l'hypothèse que le litéral x soit vrai *)
     let setLiteral x formula = 
       let (clauses, watchedLiterals, literals, answers) = formula in
-      literals.(Literal.id_of_literal x) <- true;
+      literals.(L.id_of_literal x) <- true;
 
       let rec remove = function
         | [] -> []
         | a::l when a = x -> l
-        | a::l when a = Literal.neg x -> l
+        | a::l when a = L.neg x -> l
         | a::l -> a::(remove l) in
       answers.freeLiterals <- remove answers.freeLiterals;
 
@@ -142,39 +141,39 @@ module Make : Sigs.Formula_type =
         | lst, Some u, Some v ->
           let rec aux = (function
               | [] -> None
-              | a::l -> if literals.(Literal.id_of_literal (Literal.neg a)) || a = u || a = v
+              | a::l -> if literals.(L.id_of_literal (L.neg a)) || a = u || a = v
                 then aux l
                 else Some a)
           in aux lst
       in
 
-      let old = Some (Literal.neg x) in
+      let old = Some (L.neg x) in
       let update i =
         let l, u, v = Vector.get clauses i in
         let other = if old = u then v else u in
         match find (Vector.get clauses i) with
         | Some a ->
-          watchedLiterals.(Literal.id_of_literal a) <- i::watchedLiterals.(Literal.id_of_literal a);
+          watchedLiterals.(L.id_of_literal a) <- i::watchedLiterals.(L.id_of_literal a);
           Vector.set clauses i (l, Some a, other);
           false (* On change le pointeur, car un autre a ete trouve *)
         | None ->
           (match other with
            | None -> answers.conflict <- Some i
            | Some a ->
-             if literals.(Literal.id_of_literal a)
+             if literals.(L.id_of_literal a)
              then () (* La clause est daje satisfaite *)
-             else if literals.(Literal.id_of_literal (Literal.neg a))
+             else if literals.(L.id_of_literal (L.neg a))
              then answers.conflict <- Some i (* La clause est fausse *)
              else answers.unitClauses <- (a,i)::answers.unitClauses); (* Il reste une unique manière pour satisfaire la clause *)
           true (* On garde le pointeur actuel car on en a pas trouve d'autre... *)
       in
-      watchedLiterals.(Literal.id_of_literal (Literal.neg x)) <-
-        List.filter update watchedLiterals.(Literal.id_of_literal (Literal.neg x))
+      watchedLiterals.(L.id_of_literal (L.neg x)) <-
+        List.filter update watchedLiterals.(L.id_of_literal (L.neg x))
 
     (** Oublie l'hypothèse faite sur le litéral x dans la formule *)
     let forgetLiteral x formula = 
       let (clauses, watchedLiterals, literals, answers) = formula in
-      literals.(Literal.id_of_literal x) <- false;
+      literals.(L.id_of_literal x) <- false;
       answers.unitClauses <- [];
       answers.freeLiterals <- x::answers.freeLiterals;
       answers.conflict <- None
@@ -187,7 +186,7 @@ module Make : Sigs.Formula_type =
       let (clauses, watchedLiterals, literals, answers) = formula in
       match answers.unitClauses with
       | [] -> None
-      | (x,i)::l when (literals.(Literal.id_of_literal (Literal.neg x)) || literals.(Literal.id_of_literal x)) ->
+      | (x,i)::l when (literals.(L.id_of_literal (L.neg x)) || literals.(L.id_of_literal x)) ->
         answers.unitClauses <- l;
         getUnitClause (clauses, watchedLiterals, literals, answers)
       | (x,i)::l -> Some (x,i)

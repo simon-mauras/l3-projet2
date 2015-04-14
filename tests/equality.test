@@ -1,9 +1,12 @@
 T != F /\
+(X = T \/ X = F) /\
+(Y = T \/ Y = F) /\
+(Z = T \/ Z = F) /\
 (X = T \/ Y = T \/ Z = T) /\
 (X = T \/ Y = T \/ Z = F) /\
 (X = T \/ Y = F \/ Z = T) /\
 (X = T \/ Y = F \/ Z = F) /\
 (X = F \/ Y = T \/ Z = T) /\
 (X = F \/ Y = T \/ Z = F) /\
-(X = F \/ Y = F \/ Z = F) /\
-(X = T /\ Y = T => ~~ Z=T)
+(X = F \/ Y = F \/ Z = T) /\
+(X = F \/ Y = F \/ Z = F)

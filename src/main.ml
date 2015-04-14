@@ -34,15 +34,13 @@ let add_file s =
 
 module type Mode_type =
   sig
-    module T : Map.OrderedType
     module Theory : Sigs.Theory_type
-    val parse : Lexing.lexbuf -> Sigs.cnf * T.t option array
-    val print_solution : out_channel -> int list -> T.t option array -> unit
+    val parse : Lexing.lexbuf -> Sigs.cnf * Theory.T.t option array
+    val print_solution : out_channel -> int list -> Theory.T.t option array -> unit
   end
 
 module Mode_cnf =
   struct
-    module T = String
     module Theory = Theory_default.Make
     let parse lexbuf = (Checker.check stderr (Parser.formula Lexer.main lexbuf), Array.make 0 None)
     let print_solution output l tab =
@@ -52,57 +50,66 @@ module Mode_cnf =
 
 module Mode_tseitin =
   struct
-    module T = String
     module Theory = Theory_default.Make
-    module Tseitin = Tseitin.Make(T)
-    let parse lexbuf = Tseitin.make (Parser_tseitin.main Lexer_tseitin.main lexbuf)
+    module Tseitin = Tseitin.Make(Theory.T)
+    let parse lexbuf = Tseitin.make Theory.T.make (Parser_tseitin.main Lexer_tseitin.main lexbuf)
     let print_solution output l tab =
       List.iter (fun x ->
                  let i = abs x in
                  let value = if x > 0 then "true" else "false" in
                  match tab.(i) with
                  | None -> ()
-                 | Some s -> Printf.fprintf output "%s = %s\n" s value) l;
+                 | Some s -> Theory.T.print output s;
+                             Printf.fprintf output " = %s\n" value) l;
   end
 
 module Mode_equality =
   struct
-    module T = Sigs.Equality
-    module Theory = Theory_default.Make
-    module Tseitin = Tseitin.Make(T)
-    let parse lexbuf = Tseitin.make (Parser_equality.main Lexer_equality.main lexbuf)
+    module Theory = Theory_equality.Make
+    module Tseitin = Tseitin.Make(Theory.T)
+    let parse lexbuf = Tseitin.make Theory.T.make (Parser_equality.main Lexer_equality.main lexbuf)
     let print_solution output l tab =
-      List.iter (Printf.fprintf output "%d ") l;
-      Printf.fprintf output "0\n"
+      List.iter (fun x ->
+                 let i = abs x in
+                 let value = if x > 0 then "true" else "false" in
+                 match tab.(i) with
+                 | None -> ()
+                 | Some s -> Printf.fprintf output "(";
+                             Theory.T.print output s;
+                             Printf.fprintf output ") = %s\n" value) l;
   end
-  
+
 module Mode_congruence =
   struct
-    module T = Sigs.Congruence
-    module Theory = Theory_default.Make
-    module Tseitin = Tseitin.Make(T)
-    let parse lexbuf = Tseitin.make (Parser_congruence.main Lexer_congruence.main lexbuf)
+    module Theory = Theory_congruence.Make
+    module Tseitin = Tseitin.Make(Theory.T)
+    let parse lexbuf = Tseitin.make Theory.T.make (Parser_congruence.main Lexer_congruence.main lexbuf)
     let print_solution output l tab =
-      List.iter (Printf.fprintf output "%d ") l;
-      Printf.fprintf output "0\n"
+      List.iter (fun x ->
+                 let i = abs x in
+                 let value = if x > 0 then "true" else "false" in
+                 match tab.(i) with
+                 | None -> ()
+                 | Some s -> Printf.fprintf output "(";
+                             Theory.T.print output s;
+                             Printf.fprintf output ") = %s\n" value) l;
   end
   
-module Mode_difference =
+(*module Mode_difference =
   struct
-    module T = Sigs.Difference
     module Theory = Theory_default.Make
-    module Tseitin = Tseitin.Make(T)
+    module Tseitin = Tseitin.Make(Theory.T)
     let parse lexbuf = Tseitin.make (Parser_difference.main Lexer_difference.main lexbuf)
     let print_solution output l tab =
       List.iter (Printf.fprintf output "%d ") l;
       Printf.fprintf output "0\n"
-  end
+  end*)
 
 module Main =
   functor (F : Sigs.Formula_type) ->
   functor (M : Mode_type) ->
   struct
-    module Solver = Dpll.Make (Literal2.Make) (F) (M.Theory)
+    module Solver = Dpll.Make (F) (M.Theory)
     let main input output =
       let lexbuf = Lexing.from_channel input in
       let data, tab = M.parse lexbuf in
@@ -131,12 +138,13 @@ let main () =
       | true, Tseitin_mode     -> let module M = Main (Formula_wl.Make) (Mode_tseitin) in M.main input output
       | true, Equality_mode    -> let module M = Main (Formula_wl.Make) (Mode_equality) in M.main input output
       | true, Congruence_mode  -> let module M = Main (Formula_wl.Make) (Mode_congruence) in M.main input output
-      | true, Difference_mode  -> let module M = Main (Formula_wl.Make) (Mode_difference) in M.main input output
+      (*| true, Difference_mode  -> let module M = Main (Formula_wl.Make) (Mode_difference) in M.main input output*)
       | false, Cnf_mode        -> let module M = Main (Formula.Make) (Mode_cnf) in M.main input output
       | false, Tseitin_mode    -> let module M = Main (Formula.Make) (Mode_tseitin) in M.main input output
       | false, Equality_mode   -> let module M = Main (Formula.Make) (Mode_equality) in M.main input output
       | false, Congruence_mode -> let module M = Main (Formula.Make) (Mode_congruence) in M.main input output
-      | false, Difference_mode -> let module M = Main (Formula.Make) (Mode_difference) in M.main input output
+      (*| false, Difference_mode -> let module M = Main (Formula.Make) (Mode_difference) in M.main input output*)
+      | _ -> failwith "Not implemented yed..."
     with
     | Sys_error s -> prerr_endline s (* no such file or directory, ... *)
   end

@@ -1,11 +1,10 @@
 (** Module implémentant la génération de graphes *)
- 
-(** Module de type Sigs.Solver_type *)
-module Make (L: Sigs.Literal_type) (F: Sigs.Formula_type) =
-struct
 
-  module Literal = L
-  module Formula = F(L)
+module L = Sigs.Literal
+  
+(** Module de type Sigs.Solver_type *)
+module Make (F: Sigs.Formula_type) =
+struct
 
   type node = Blue | Yellow | Purple | Red | White | Invisible
   
@@ -14,17 +13,17 @@ struct
     adjacencyMatrix : bool array array;
     nodeType: node array;
     nodeLabel: string array;
-    learnedClause : Literal.t list;
-    uip : Literal.t;
+    learnedClause : L.t list;
+    uip : L.t;
   }
   
   (** Construit un graphe (de type t) à partir d'un tableau de litéraux (un noeud par litéral) en y ajoutant un symbole d'absurdité *)
   let make conflict formula deductionCause deductionLevel currentDeductionLevel =
   
-    let n = 2 * Formula.getNbVariables formula in
+    let n = 2 * F.getNbVariables formula in
     let matrix = Array.make_matrix (n+1) (n+1) false in
     let node = Array.make (n+1) Invisible in
-    let label = Array.init (n+1) (fun i -> string_of_int (Literal.to_int (Literal.literal_of_id i))) in
+    let label = Array.init (n+1) (fun i -> string_of_int (L.to_int (L.literal_of_id i))) in
     
     node.(n) <- Red;
     label.(n) <- "Conflict";
@@ -41,16 +40,16 @@ struct
           (match deductionCause.(i) with
            | None -> () (* Il s'agit d'un paris *)
            | Some idReason ->
-             let reason = Formula.getClause formula idReason in
-             List.iter (fun l -> let id = Literal.id_of_literal (Literal.neg l) in
-                                 if i <> Literal.id_of_literal l then begin
+             let reason = F.getClause formula idReason in
+             List.iter (fun l -> let id = L.id_of_literal (L.neg l) in
+                                 if i <> L.id_of_literal l then begin
                                    explore id;
                                    matrix.(id).(i) <- true;
                                  end) reason);
            topSort := i::!topSort;
       in
     
-    List.iter (fun l -> let id = Literal.id_of_literal (Literal.neg l) in
+    List.iter (fun l -> let id = L.id_of_literal (L.neg l) in
                         explore id;
                         matrix.(id).(n) <- true) conflict;
                     
@@ -63,12 +62,12 @@ struct
       if !uip = None then begin
         decr nbWaiting;
         if !nbWaiting = 0
-          then uip := Some (Literal.literal_of_id i)
+          then uip := Some (L.literal_of_id i)
           else match deductionCause.(i) with
                | None -> () (* Il s'agit d'un paris *)
                | Some idReason ->
-                 let reason = Formula.getClause formula idReason in
-                 List.iter (fun l -> let id = Literal.id_of_literal (Literal.neg l) in
+                 let reason = F.getClause formula idReason in
+                 List.iter (fun l -> let id = L.id_of_literal (L.neg l) in
                                      if not waiting.(id) then begin
                                        waiting.(id) <- true;
                                        if node.(id) = Blue
@@ -78,7 +77,7 @@ struct
                                      end) reason;
       end in
     
-    List.iter (fun l -> let id = Literal.id_of_literal (Literal.neg l) in
+    List.iter (fun l -> let id = L.id_of_literal (L.neg l) in
                         if not waiting.(id) then begin
                           waiting.(id) <- true;
                           if node.(id) = Blue
@@ -93,7 +92,7 @@ struct
             | None -> failwith "Uip not found"
             | Some i -> i in
     
-    clause := (Literal.neg u)::!clause;
+    clause := (L.neg u)::!clause;
     
     let rec dfs act =
       node.(act) <- Purple;
@@ -102,8 +101,8 @@ struct
           then dfs next
       done in
     
-    dfs (Literal.id_of_literal u);
-    node.(Literal.id_of_literal u) <- Yellow;
+    dfs (L.id_of_literal u);
+    node.(L.id_of_literal u) <- Yellow;
     
     { adjacencyMatrix = matrix; nodeType = node; nodeLabel = label; learnedClause = !clause; uip = u }
 

@@ -2,17 +2,26 @@
 
 (** Module de type Sigs.Theory_type *)
 module Make : Sigs.Theory_type =
-  functor (L : Sigs.Literal_type) ->
   struct
 
-    (** Module implémentant la manipulation de litéraux *)
-    module Literal = L
+    (** Module représentant un terme de la théorie par défaut *)
+    module T = struct
+      type t = string
+      let make = function
+        | Sigs.Parsing_default s -> s
+        | _ -> failwith "Wrong parser"
+      let compare = String.compare
+      let print output = output_string output
+    end
+    
+    (** Type d'un terme de la logique par défaut *)
+    type term = string
     
     (** Type d'un ensemble de contraintes *)
     type t = unit
     
     (** Un ensemble de contraintes vide *)
-    let empty = ()
+    let make _ = ()
     
     (** Ajoute une contrainte *)
     let setConstraint l e = ()
