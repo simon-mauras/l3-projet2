@@ -22,7 +22,6 @@ module Make : Sigs.Formula_type =
     (** Réponses aux différentes requetes. Cela permet d'éviter un grand nombre de calculs redondants *)
     type requestAnswer = {
       mutable unitClauses : (L.t * int) list;
-      mutable pureLiterals : L.t list;
       mutable freeLiterals : L.t list;
       mutable conflict : int option
     }
@@ -46,7 +45,6 @@ module Make : Sigs.Formula_type =
 
       let answers = {
         unitClauses = [];
-        pureLiterals = [];
         freeLiterals = [];
         conflict = None
       } in
@@ -113,8 +111,6 @@ module Make : Sigs.Formula_type =
           output_string out "\n") clauses;
       output_string out "--------- unitClauses ----------\n";
       List.iter f2 answers.unitClauses;
-      output_string out "\n--------- pureLiterals ---------\n";
-      List.iter f answers.pureLiterals;
       output_string out "\n--------- freeLiterals ---------\n";
       List.iter f answers.freeLiterals;
       output_string out "\n----------- isFalse ------------\n";

@@ -11,6 +11,10 @@ module Make : Sigs.Theory_type =
         type atom = X of var | Fun of var * atom list
         type t = Eq of atom * atom | Neq of atom * atom
         
+        let neg = function
+          | Eq (a, b) -> Neq (a, b)
+          | Neq (a, b) -> Eq (a, b)
+        
         let make x =
           let module S = Sigs.Data.Congruence in
           let rec aux_atom = function
