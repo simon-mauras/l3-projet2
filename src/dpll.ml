@@ -113,6 +113,7 @@ module Make : Sigs.Solver_type =
                 | None -> continue := false
                 | Some u ->
                   Formula.setLiteral u form;
+                  Theory.setConstraint u theor;
                   Stack.push (Deduction u) stack;
                   deductionLevel.(Literal.id_of_literal u) <- Some !currentDeductionLevel;
                   deductionCause.(Literal.id_of_literal u) <- Some !learnedClause;
@@ -124,15 +125,18 @@ module Make : Sigs.Solver_type =
                 | Bet x, Some lvl, None ->
                   currentDeductionLevel := lvl;
                   Formula.forgetLiteral x form;
+                  Theory.forgetConstraint x theor;
                   deductionLevel.(Literal.id_of_literal x) <- None;
                   deductionCause.(Literal.id_of_literal x) <- None;
                   Formula.setLiteral (Literal.neg x) form;
+                  Theory.setConstraint (Literal.neg x) theor;
                   Stack.push (Deduction (Literal.neg x)) stack;
                   deductionLevel.(Literal.id_of_literal (Literal.neg x)) <- Some !currentDeductionLevel;
                   deductionCause.(Literal.id_of_literal (Literal.neg x)) <- None;
                 | Deduction x, Some lvl, None ->
                   currentDeductionLevel := lvl;
                   Formula.forgetLiteral x form;
+                  Theory.forgetConstraint x theor;
                   deductionLevel.(Literal.id_of_literal x) <- None;
                   deductionCause.(Literal.id_of_literal x) <- None;
                   unstack();
@@ -141,6 +145,7 @@ module Make : Sigs.Solver_type =
                   currentDeductionLevel := lvl;
                   if lvl > lvlBacktrack then begin
                     Formula.forgetLiteral x form;
+                    Theory.forgetConstraint x theor;
                     deductionLevel.(Literal.id_of_literal x) <- None;
                     deductionCause.(Literal.id_of_literal x) <- None;
                     unstack ()
@@ -150,6 +155,7 @@ module Make : Sigs.Solver_type =
                     | None -> failwith "Error: deductionUip."
                     | Some u ->
                       Formula.setLiteral u form;
+                      Theory.setConstraint u theor;
                       Stack.push (Deduction u) stack;
                       deductionLevel.(Literal.id_of_literal u) <- Some !currentDeductionLevel;
                       deductionCause.(Literal.id_of_literal u) <- Some !learnedClause;
@@ -174,6 +180,7 @@ module Make : Sigs.Solver_type =
                incr statUnitClause;
                modif := true;
                Formula.setLiteral x form;
+               Theory.setConstraint x theor;
                Stack.push (Deduction x) stack;
                deductionCause.(Literal.id_of_literal x) <- Some i;
                deductionLevel.(Literal.id_of_literal x) <- Some !currentDeductionLevel);
@@ -185,6 +192,7 @@ module Make : Sigs.Solver_type =
                  incr currentDeductionLevel;
                  incr statFreeLiteral;
                  Formula.setLiteral x form;
+                 Theory.setConstraint x theor;
                  Stack.push (Bet x) stack;
                  deductionLevel.(Literal.id_of_literal x) <- Some !currentDeductionLevel);
           end
