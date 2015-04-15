@@ -109,6 +109,11 @@ module Make : Sigs.Theory_type =
     
     (** Oublie une contrainte *)
     let forgetConstraint l ((tabLiterals, currentLiterals), (mapVars, tabVars), (find, size, equality), disequality) =
+      let rec remove = function
+        | [] -> []
+        | a::b when a = l -> b
+        | a::b -> a::(remove b) in
+      currentLiterals := remove !currentLiterals;
       match tabLiterals.(L.id_of_literal l) with
       | Some x -> begin
         match x with
@@ -133,7 +138,7 @@ module Make : Sigs.Theory_type =
           then i
           else root find.(i) in
       if List.exists (fun (a, b) -> root a = root b) !disequality
-        then Some !currentLiterals
+        then Some (List.map L.neg !currentLiterals)
         else None
 end
 

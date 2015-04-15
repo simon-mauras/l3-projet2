@@ -63,6 +63,7 @@ module Make : Sigs.Solver_type =
         with
         | Some conflict ->
           begin
+            
             if !interactive then begin
               print_endline "Conflict found.";
               print_endline "- g : export .dot file with the conflict graph.";

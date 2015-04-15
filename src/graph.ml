@@ -32,7 +32,7 @@ struct
     let rec explore i =
       if node.(i) = Invisible then
          match deductionLevel.(i) with
-         | None -> failwith "Error..."
+         | None -> failwith (string_of_int (L.to_int (L.literal_of_id i)))
          | Some level when level <> currentDeductionLevel ->
            node.(i) <- White
          | Some level ->
