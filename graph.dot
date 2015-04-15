@@ -1,46 +1,71 @@
 digraph G {
-"-21" [style=filled,color=blue]
-"-27" [color=black]
-"55" [style=filled,color=blue]
-"-70" [style=filled,color=blue]
-"74" [style=filled,color=purple]
-"83" [style=filled,color=blue]
-"-97" [style=filled,color=purple]
-"-117" [style=filled,color=yellow]
-"-120" [color=black]
-"121" [style=filled,color=blue]
-"126" [style=filled,color=blue]
-"-135" [style=filled,color=purple]
-"-144" [style=filled,color=blue]
-"-160" [color=black]
-"-161" [style=filled,color=purple]
-"183" [style=filled,color=purple]
+"1" [color=black]
+"2" [color=black]
+"-3" [color=black]
+"-4" [color=black]
+"5" [color=black]
+"6" [color=black]
+"7" [style=filled,color=yellow]
+"8" [color=black]
+"9" [color=black]
+"10" [color=black]
+"11" [color=black]
+"12" [color=black]
+"13" [color=black]
+"14" [color=black]
+"15" [color=black]
+"16" [color=black]
+"17" [color=black]
+"18" [color=black]
+"19" [color=black]
+"20" [color=black]
+"21" [color=black]
+"22" [color=black]
+"23" [color=black]
+"24" [color=black]
+"25" [color=black]
+"26" [color=black]
+"27" [color=black]
+"28" [color=black]
+"29" [color=black]
+"-30" [color=black]
+"31" [color=black]
+"32" [color=black]
+"33" [color=black]
+"34" [color=black]
 "Conflict" [style=filled,color=red]
-"-21" -> "126";
-"-27" -> "-97";
-"55" -> "-70";
-"55" -> "-144";
-"-70" -> "121";
-"74" -> "-97";
-"74" -> "Conflict";
-"83" -> "55";
-"83" -> "-70";
-"83" -> "-144";
-"-97" -> "Conflict";
-"-117" -> "-135";
-"-117" -> "-161";
-"-120" -> "-117";
-"-120" -> "-135";
-"121" -> "-117";
-"126" -> "55";
-"126" -> "83";
-"-135" -> "-161";
-"-135" -> "183";
-"-144" -> "121";
-"-160" -> "83";
-"-160" -> "126";
-"-161" -> "74";
-"-161" -> "183";
-"183" -> "74";
-"183" -> "Conflict";
+"1" -> "Conflict";
+"2" -> "Conflict";
+"-3" -> "Conflict";
+"-4" -> "Conflict";
+"5" -> "Conflict";
+"6" -> "Conflict";
+"7" -> "Conflict";
+"8" -> "Conflict";
+"9" -> "Conflict";
+"10" -> "Conflict";
+"11" -> "Conflict";
+"12" -> "Conflict";
+"13" -> "Conflict";
+"14" -> "Conflict";
+"15" -> "Conflict";
+"16" -> "Conflict";
+"17" -> "Conflict";
+"18" -> "Conflict";
+"19" -> "Conflict";
+"20" -> "Conflict";
+"21" -> "Conflict";
+"22" -> "Conflict";
+"23" -> "Conflict";
+"24" -> "Conflict";
+"25" -> "Conflict";
+"26" -> "Conflict";
+"27" -> "Conflict";
+"28" -> "Conflict";
+"29" -> "Conflict";
+"-30" -> "Conflict";
+"31" -> "Conflict";
+"32" -> "Conflict";
+"33" -> "Conflict";
+"34" -> "Conflict";
 }
