@@ -9,6 +9,8 @@ parser.mli
 resol
 resol.opt
 test_tseitin
-tests/downloads/*.cnf
-tests/generator/*.cnf
+tests/cnf/downloads/*.cnf
+tests/cnf/generator/*.cnf
+tests/tseitin/generator/*.tsei
+tests/equality/generator/*.equ
 _build
