@@ -9,6 +9,7 @@ module Make : Sigs.Theory_type =
     (** Module représentant un terme de la théorie de l'égalité *)
     module T =
       struct
+      
         type var = string
         type atom = X of var
         type t = Eq of atom * atom | Neq of atom * atom
@@ -19,10 +20,19 @@ module Make : Sigs.Theory_type =
         
         let make x =
           let module S = Sigs.Data.Equality in
-          match x with
-          | Sigs.Parsing_equality (S.Eq (S.X a, S.X b)) -> Eq (X a, X b)
-          | Sigs.Parsing_equality (S.Neq (S.X a, S.X b)) -> Neq (X a, X b)
-          | _ -> failwith "Wrong parser"
+          let aux_term = function
+          | S.Eq (S.X a, S.X b) -> Eq (X a, X b)
+          | S.Neq (S.X a, S.X b) -> Neq (X a, X b) in
+          let aux_parsing = function
+          | Sigs.Parsing_equality a -> aux_term a
+          | _ -> failwith "Wrong parser" in
+          let rec aux_formula = function
+          | Sigs.And(a, b) -> Sigs.And(aux_formula a, aux_formula b)
+          | Sigs.Or(a, b) -> Sigs.Or(aux_formula a, aux_formula b)
+          | Sigs.Imp(a, b) -> Sigs.Imp(aux_formula a, aux_formula b)
+          | Sigs.Not(a) -> Sigs.Not(aux_formula a)
+          | Sigs.Atom(a) -> Sigs.Atom(aux_parsing a) in
+          aux_formula x
           
         let compare = Pervasives.compare
         
@@ -36,6 +46,7 @@ module Make : Sigs.Theory_type =
             | Neq (a, b) -> print_atom a;
                             output_string output " != ";
                             print_atom b
+        
       end
     
     module MapVar = Map.Make (String)

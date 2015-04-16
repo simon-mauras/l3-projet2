@@ -52,7 +52,7 @@ module Mode_tseitin =
   struct
     module Theory = Theory_default.Make
     module Tseitin = Tseitin.Make(Theory.T)
-    let parse lexbuf = Tseitin.make Theory.T.make (Parser_tseitin.main Lexer_tseitin.main lexbuf)
+    let parse lexbuf = Tseitin.make (Theory.T.make (Parser_tseitin.main Lexer_tseitin.main lexbuf))
     let print_solution output l tab =
       List.iter (fun x ->
                  let i = abs x in
@@ -67,7 +67,7 @@ module Mode_equality =
   struct
     module Theory = Theory_equality.Make
     module Tseitin = Tseitin.Make(Theory.T)
-    let parse lexbuf = Tseitin.make Theory.T.make (Parser_equality.main Lexer_equality.main lexbuf)
+    let parse lexbuf = Tseitin.make (Theory.T.make (Parser_equality.main Lexer_equality.main lexbuf))
     let print_solution output l tab =
       List.iter (fun x ->
                  let i = abs x in
@@ -83,7 +83,7 @@ module Mode_congruence =
   struct
     module Theory = Theory_congruence.Make
     module Tseitin = Tseitin.Make(Theory.T)
-    let parse lexbuf = Tseitin.make Theory.T.make (Parser_congruence.main Lexer_congruence.main lexbuf)
+    let parse lexbuf = Tseitin.make (Theory.T.make (Parser_congruence.main Lexer_congruence.main lexbuf))
     let print_solution output l tab =
       List.iter (fun x ->
                  let i = abs x in
@@ -95,15 +95,21 @@ module Mode_congruence =
                              Printf.fprintf output ") = %s\n" value) l;
   end
   
-(*module Mode_difference =
+module Mode_difference =
   struct
-    module Theory = Theory_default.Make
+    module Theory = Theory_difference.Make
     module Tseitin = Tseitin.Make(Theory.T)
-    let parse lexbuf = Tseitin.make (Parser_difference.main Lexer_difference.main lexbuf)
+    let parse lexbuf = Tseitin.make (Theory.T.make (Parser_difference.main Lexer_difference.main lexbuf))
     let print_solution output l tab =
-      List.iter (Printf.fprintf output "%d ") l;
-      Printf.fprintf output "0\n"
-  end*)
+      List.iter (fun x ->
+                 let i = abs x in
+                 let value = if x > 0 then "true" else "false" in
+                 match tab.(i) with
+                 | None -> ()
+                 | Some s -> Printf.fprintf output "(";
+                             Theory.T.print output s;
+                             Printf.fprintf output ") = %s\n" value) l;
+  end
 
 module Main =
   functor (F : Sigs.Formula_type) ->
@@ -138,13 +144,12 @@ let main () =
       | true, Tseitin_mode     -> let module M = Main (Formula_wl.Make) (Mode_tseitin) in M.main input output
       | true, Equality_mode    -> let module M = Main (Formula_wl.Make) (Mode_equality) in M.main input output
       | true, Congruence_mode  -> let module M = Main (Formula_wl.Make) (Mode_congruence) in M.main input output
-      (*| true, Difference_mode  -> let module M = Main (Formula_wl.Make) (Mode_difference) in M.main input output*)
+      | true, Difference_mode  -> let module M = Main (Formula_wl.Make) (Mode_difference) in M.main input output
       | false, Cnf_mode        -> let module M = Main (Formula.Make) (Mode_cnf) in M.main input output
       | false, Tseitin_mode    -> let module M = Main (Formula.Make) (Mode_tseitin) in M.main input output
       | false, Equality_mode   -> let module M = Main (Formula.Make) (Mode_equality) in M.main input output
       | false, Congruence_mode -> let module M = Main (Formula.Make) (Mode_congruence) in M.main input output
-      (*| false, Difference_mode -> let module M = Main (Formula.Make) (Mode_difference) in M.main input output*)
-      | _ -> failwith "Not implemented yed..."
+      | false, Difference_mode -> let module M = Main (Formula.Make) (Mode_difference) in M.main input output
     with
     | Sys_error s -> prerr_endline s (* no such file or directory, ... *)
   end

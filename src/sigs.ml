@@ -88,7 +88,7 @@ module type Theory_type =
     (** Module représentant un terme de la théorie *)
     module T : sig
       type t
-      val make : parsing -> t
+      val make : parsing formula -> t formula
       val compare : t -> t -> int
       val print : out_channel -> t -> unit
     end

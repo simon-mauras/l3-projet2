@@ -6,7 +6,7 @@ module Make =
     
     module MapS = Map.Make(S)
     
-    let make (f : parsing -> S.t) (data : parsing formula) : (cnf * S.t option array) =
+    let make (data : S.t formula) : (cnf * S.t option array) =
     
       (* On commence par construire une map *)
       let leaf = ref 0 in
@@ -16,9 +16,9 @@ module Make =
         | Or  (a, b) -> incr node; build_map (build_map s a) b
         | Imp (a, b) -> incr node; build_map (build_map s a) b
         | Not (a)    -> incr node; build_map s a
-        | Atom (x)   -> if MapS.mem (f x) s
+        | Atom (x)   -> if MapS.mem x s
                           then s
-                          else (incr leaf; MapS.add (f x) !leaf s)
+                          else (incr leaf; MapS.add x !leaf s)
       in
       let map = build_map MapS.empty data in
       
@@ -45,7 +45,7 @@ module Make =
           | Not (a)    -> incr node; let n0 = !node in
                           let l1, n1 = aux l0 a in
                           ([-n0;-n1]::[n0;n1]::l1, n0)
-          | Atom (x)   -> (l0, MapS.find (f x) map)
+          | Atom (x)   -> (l0, MapS.find x map)
         in
         let form, n = aux [] x in [n]::form
       in

@@ -7,6 +7,7 @@ module Make : Sigs.Theory_type =
     (** Module représentant un terme de la théorie de la congruence *)
     module T =
       struct
+      
         type var = string
         type atom = X of var | Fun of var * atom list
         type t = Eq of atom * atom | Neq of atom * atom
@@ -23,9 +24,16 @@ module Make : Sigs.Theory_type =
           let aux_term = function
           | S.Eq (a, b) -> Eq (aux_atom a, aux_atom b)
           | S.Neq (a, b) -> Neq (aux_atom a, aux_atom b) in
-          match x with
-          | Sigs.Parsing_congruence u -> aux_term u
-          | _ -> failwith "Wrong parser"
+          let aux_parsing = function
+          | Sigs.Parsing_congruence a -> aux_term a
+          | _ -> failwith "Wrong parser" in
+          let rec aux_formula = function
+          | Sigs.And(a, b) -> Sigs.And(aux_formula a, aux_formula b)
+          | Sigs.Or(a, b) -> Sigs.Or(aux_formula a, aux_formula b)
+          | Sigs.Imp(a, b) -> Sigs.Imp(aux_formula a, aux_formula b)
+          | Sigs.Not(a) -> Sigs.Not(aux_formula a)
+          | Sigs.Atom(a) -> Sigs.Atom(aux_parsing a) in
+          aux_formula x
           
         let compare = Pervasives.compare
         
