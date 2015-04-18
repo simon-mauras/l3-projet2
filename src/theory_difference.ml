@@ -126,8 +126,7 @@ module Make : Sigs.Theory_type =
       
       try
         let id,_,_,_ = List.find (fun (a, b, n, l) -> dist.(a) + n < dist.(b)) edges in
-        print_string "conflict\n";
-        Some prec.(id)
+        Some (List.map L.neg prec.(id))
       with
         | Not_found -> None
 end
