@@ -63,14 +63,15 @@ module Make : Sigs.Theory_type =
     (** Type d'un ensemble de contraintes *)
     type t_literal = T.t option array
     type t_var = int MapVar.t * T.atom array
-    type t_equality = int array * L.t option array * int array * (int * int * int * int) list ref
+    type t_equality = int array * L.t option array * int array * (int * int) list array
     type t_disequality = (int * int * L.t) list ref
     type t = t_literal * t_var * t_equality * t_disequality
     
     (** Un ensemble de contraintes vide *)
     let make tab =
     
-      let tabLiterals = Array.make (2 * Array.length tab) None in
+      let nbLiterals = (2 * Array.length tab) - 2 in
+      let tabLiterals = Array.make nbLiterals None in
       for i=1 to (Array.length tab) - 1 do
         match tab.(i) with
           | None -> ()
@@ -95,7 +96,7 @@ module Make : Sigs.Theory_type =
       
       ((tabLiterals),
        (!mapVars, tabVars),
-       (Array.init !nbVars (fun i -> i), Array.make !nbVars None, Array.make !nbVars 1, ref []),
+       (Array.init !nbVars (fun i -> i), Array.make !nbVars None, Array.make !nbVars 1, Array.make nbLiterals []),
        ref [])
     
         
@@ -105,7 +106,8 @@ module Make : Sigs.Theory_type =
         if i = find.(i)
           then i
           else root find.(i) in
-      match tabLiterals.(L.id_of_literal lit) with
+      let idLit = L.id_of_literal lit in
+      match tabLiterals.(idLit) with
       | Some x -> begin
         match x with
         | T.Eq(a, b) ->
@@ -116,12 +118,12 @@ module Make : Sigs.Theory_type =
               size.(u) <- size.(u) + size.(v);
               find.(v) <- u;
               cause.(v) <- Some lit;
-              equality := ((MapVar.find a mapVars), (MapVar.find b mapVars), v, u)::!equality;
+              equality.(idLit) <- [(v, u)];
             end else begin
               size.(v) <- size.(u) + size.(v);
               find.(u) <- v;
               cause.(u) <- Some lit;
-              equality := ((MapVar.find a mapVars), (MapVar.find b mapVars), u, v)::!equality;
+              equality.(idLit) <- [(u, v)];
             end
           end
         | T.Neq(a, b) -> disequality := ((MapVar.find a mapVars), (MapVar.find b mapVars), lit)::!disequality
@@ -130,17 +132,15 @@ module Make : Sigs.Theory_type =
     
     (** Oublie une contrainte *)
     let forgetConstraint lit (tabLiterals, (mapVars, tabVars), (find, cause, size, equality), disequality) =
-      match tabLiterals.(L.id_of_literal lit) with
+      let idLit = L.id_of_literal lit in
+      match tabLiterals.(idLit) with
       | Some x -> begin
         match x with
         | T.Eq(a, b) ->
-          let aId = MapVar.find a mapVars in
-          let bId = MapVar.find b mapVars in
-          let _,_,u,v = List.find (fun (u,v,_,_) -> u = aId && v = bId) !equality in
-          equality := List.filter (fun (u,v,_,_) -> u <> aId || v <> bId) !equality;
-          find.(u) <- u;
-          cause.(u) <- None;
-          size.(v) <- size.(v) - size.(u);
+          List.iter (fun (u, v) -> find.(u) <- u;
+                                   cause.(u) <- None;
+                                   size.(v) <- size.(v) - size.(u)) equality.(idLit);
+          equality.(idLit) <- []
         | T.Neq _ ->
           disequality := List.filter (fun (_,_,l) -> lit <> l) !disequality
         end
@@ -172,11 +172,6 @@ module Make : Sigs.Theory_type =
               dfs (dfs (SetInt.add i seen) aId) bId
             | _ -> failwith "Impossible" in
       
-      (*let rec affiche i =
-        Printf.printf "%s " tabVars.(i);
-        if i <> find.(i)
-          then affiche find.(i) in*)
-      
       let conflict = ref [] in
       List.iter (fun (a, b, lit) ->
                  if !conflict = [] then
@@ -188,14 +183,6 @@ module Make : Sigs.Theory_type =
                      SetInt.iter (fun i -> match cause.(i) with
                                              | Some l -> conflict := l::!conflict
                                              | None -> ()) seen;
-                     (*affiche a;
-                     Printf.fprintf stdout "\n";
-                     affiche b;
-                     Printf.fprintf stdout "\n";
-                     List.iter (fun l -> match tabLiterals.(L.id_of_literal l) with
-                                         | Some t -> T.print stdout t; Printf.fprintf stdout "  "
-                                         | None -> failwith "Error") !conflict;
-                     Printf.fprintf stdout "\n";*)
                  end) !disequality;
       if !conflict = [] then None else Some (List.map L.neg !conflict)
 

@@ -10,6 +10,7 @@ module Make : Sigs.Solver_type =
     module Formula = F
     module Theory = T
     module Graph = Graph.Make(F)
+    module Graph2 = Graph2.Make(F)
     type assertion = Bet of Literal.t | Deduction of Literal.t
     
     let outDebug = ref stderr
@@ -45,7 +46,8 @@ module Make : Sigs.Solver_type =
       let theor = Theory.make tab in
       let stack = Stack.create () in
       let currentDeductionLevel = ref 0 in
-      let deductionLevel = Array.make (2 * Formula.getNbVariables form) None in
+      let currentLevel = ref 0 in
+      let deductionLevel = Array.make (2 * Formula.getNbVariables form) (None, None) in
       let deductionCause = Array.make (2 * Formula.getNbVariables form) None in
       let continue = ref true in
       let interactive = ref !clauseLearningInteractive in
@@ -92,14 +94,14 @@ module Make : Sigs.Solver_type =
             let learnedClause = ref 0 in
             if clauseLearning then begin
               incr statClauseLearning;
-              let graph = Graph.make conflict form deductionCause deductionLevel !currentDeductionLevel in
-              let clause = Graph.getLearnedClause graph in
-              let uip = Graph.getUip graph in
+              let graph = Graph2.make conflict form deductionCause deductionLevel !currentDeductionLevel in
+              let clause = Graph2.getLearnedClause graph in
+              let uip = Graph2.getUip graph in
               
               let lvl = List.fold_left (fun maxi l -> let id = Literal.id_of_literal (Literal.neg l) in
                                                       match deductionLevel.(id) with
-                                                      | None -> failwith "Error: deductionLevel"
-                                                      | Some x -> if l = Literal.neg uip then maxi else max x maxi) 0 clause in 
+                                                      | _, None -> failwith "Error: deductionLevel"
+                                                      | _, Some x -> if l = Literal.neg uip then maxi else max x maxi) 0 clause in
                                                       
               if lvl <> !currentDeductionLevel
                 then levelBacktrack := Some lvl;
@@ -116,49 +118,54 @@ module Make : Sigs.Solver_type =
                   Formula.setLiteral u form;
                   Theory.setConstraint u theor;
                   Stack.push (Deduction u) stack;
-                  deductionLevel.(Literal.id_of_literal u) <- Some !currentDeductionLevel;
+                  incr currentLevel;
+                  deductionLevel.(Literal.id_of_literal u) <- Some !currentLevel, Some !currentDeductionLevel;
                   deductionCause.(Literal.id_of_literal u) <- Some !learnedClause;
               end else begin
+                decr currentLevel;
                 let s = Stack.pop stack in
                 let x = match s with Bet l | Deduction l -> l in
                 match s, deductionLevel.(Literal.id_of_literal x), !levelBacktrack  with
-                | _, None, _ -> failwith "Error: deductionLevel"
-                | Bet x, Some lvl, None ->
+                | _, (_, None), _ -> failwith "Error: deductionLevel"
+                | Bet x, (_, Some lvl), None ->
                   currentDeductionLevel := lvl;
                   Formula.forgetLiteral x form;
                   Theory.forgetConstraint x theor;
-                  deductionLevel.(Literal.id_of_literal x) <- None;
+                  deductionLevel.(Literal.id_of_literal x) <- None, None;
                   deductionCause.(Literal.id_of_literal x) <- None;
                   Formula.setLiteral (Literal.neg x) form;
                   Theory.setConstraint (Literal.neg x) theor;
                   Stack.push (Deduction (Literal.neg x)) stack;
-                  deductionLevel.(Literal.id_of_literal (Literal.neg x)) <- Some !currentDeductionLevel;
+                  incr currentLevel;
+                  deductionLevel.(Literal.id_of_literal (Literal.neg x)) <- Some !currentLevel, Some !currentDeductionLevel;
                   deductionCause.(Literal.id_of_literal (Literal.neg x)) <- None;
-                | Deduction x, Some lvl, None ->
+                | Deduction x, (_, Some lvl), None ->
                   currentDeductionLevel := lvl;
                   Formula.forgetLiteral x form;
                   Theory.forgetConstraint x theor;
-                  deductionLevel.(Literal.id_of_literal x) <- None;
+                  deductionLevel.(Literal.id_of_literal x) <- None, None;
                   deductionCause.(Literal.id_of_literal x) <- None;
                   unstack();
-                | Bet x, Some lvl, Some lvlBacktrack
-                | Deduction x, Some lvl, Some lvlBacktrack ->
+                | Bet x, (_, Some lvl), Some lvlBacktrack
+                | Deduction x, (_, Some lvl), Some lvlBacktrack ->
                   currentDeductionLevel := lvl;
                   if lvl > lvlBacktrack then begin
                     Formula.forgetLiteral x form;
                     Theory.forgetConstraint x theor;
-                    deductionLevel.(Literal.id_of_literal x) <- None;
+                    deductionLevel.(Literal.id_of_literal x) <- None, None;
                     deductionCause.(Literal.id_of_literal x) <- None;
                     unstack ()
                   end else begin
                     Stack.push (Bet x) stack;
+                    incr currentLevel;
                     match !deductionUip with
                     | None -> failwith "Error: deductionUip."
                     | Some u ->
                       Formula.setLiteral u form;
                       Theory.setConstraint u theor;
                       Stack.push (Deduction u) stack;
-                      deductionLevel.(Literal.id_of_literal u) <- Some !currentDeductionLevel;
+                      incr currentLevel;
+                      deductionLevel.(Literal.id_of_literal u) <- Some !currentLevel, Some !currentDeductionLevel;
                       deductionCause.(Literal.id_of_literal u) <- Some !learnedClause;
                   end
                 end
@@ -183,8 +190,9 @@ module Make : Sigs.Solver_type =
                Formula.setLiteral x form;
                Theory.setConstraint x theor;
                Stack.push (Deduction x) stack;
+               incr currentLevel;
                deductionCause.(Literal.id_of_literal x) <- Some i;
-               deductionLevel.(Literal.id_of_literal x) <- Some !currentDeductionLevel);
+               deductionLevel.(Literal.id_of_literal x) <- Some !currentLevel, Some !currentDeductionLevel);
             (* 2 : On parie sur un litéral si aucune modification n'a été faite *)
             if not !modif then
               (match Formula.getFreeLiteral form with
@@ -195,7 +203,8 @@ module Make : Sigs.Solver_type =
                  Formula.setLiteral x form;
                  Theory.setConstraint x theor;
                  Stack.push (Bet x) stack;
-                 deductionLevel.(Literal.id_of_literal x) <- Some !currentDeductionLevel);
+                 incr currentLevel;
+                 deductionLevel.(Literal.id_of_literal x) <- Some !currentLevel, Some !currentDeductionLevel);
           end
       done;
       

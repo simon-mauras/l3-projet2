@@ -1,16 +1,39 @@
 digraph G {
-"5" [color=black]
-"12" [color=black]
-"-124" [style=filled,color=blue]
-"-125" [style=filled,color=yellow]
-"129" [color=black]
-"4560" [color=black]
+"2" [style=filled,color=yellow]
+"3" [style=filled,color=purple]
+"-4" [style=filled,color=purple]
+"-7" [style=filled,color=purple]
+"8" [style=filled,color=purple]
+"-10" [style=filled,color=purple]
+"-11" [style=filled,color=purple]
+"-12" [style=filled,color=purple]
+"-13" [style=filled,color=purple]
+"-14" [style=filled,color=purple]
+"15" [style=filled,color=purple]
+"16" [style=filled,color=purple]
 "Conflict" [style=filled,color=red]
-"5" -> "-124";
-"12" -> "-125";
-"-124" -> "Conflict";
-"-125" -> "Conflict";
-"129" -> "-124";
-"129" -> "-125";
-"4560" -> "Conflict";
+"2" -> "-4";
+"2" -> "8";
+"2" -> "-10";
+"2" -> "-12";
+"2" -> "-13";
+"3" -> "-13";
+"-4" -> "3";
+"-7" -> "Conflict";
+"8" -> "15";
+"8" -> "16";
+"-10" -> "-7";
+"-10" -> "8";
+"-10" -> "15";
+"-10" -> "Conflict";
+"-11" -> "-7";
+"-12" -> "-14";
+"-12" -> "16";
+"-13" -> "-11";
+"-13" -> "-14";
+"-14" -> "-11";
+"15" -> "3";
+"15" -> "-12";
+"15" -> "Conflict";
+"16" -> "-4";
 }
