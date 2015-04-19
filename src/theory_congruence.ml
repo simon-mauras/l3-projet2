@@ -114,16 +114,6 @@ module Make : Sigs.Theory_type =
                                              useLists.(i) <- id::useLists.(i)) l; id in
       MapVar.iter (fun s i -> ignore (buildUseLists s)) !mapVars;
       Array.iteri (fun i l -> useLists.(i) <- uniq l) useLists;
-      
-      (*
-      let rec print_atom = function
-      | T.X s -> print_string s
-      | T.Fun (s, l) -> print_string s;
-                      List.iter (fun u -> print_string "[";
-                                          print_atom u;
-                                          print_string "]") l in
-      Array.iteri (fun i x -> print_atom x; print_string " "; List.iter (fun y -> print_atom tabVars.(y); print_string " ") useLists.(i); print_newline ()) tabVars;
-      *)
           
       ((tabLiterals),
        (!mapVars, tabVars, useLists),
