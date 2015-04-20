@@ -38,7 +38,7 @@ module Make : Sigs.Formula_type =
       let compare x y =
         let vx = nbOccur.(L.id_of_literal x) + nbOccur.(L.id_of_literal (L.neg x)) in
         let vy = nbOccur.(L.id_of_literal y) + nbOccur.(L.id_of_literal (L.neg y)) in
-        vx - vy in
+        vy - vx in
       let watchedLiterals = Array.make (2*nb_vars) [] in
 
       let tabLiterals = Array.make (2*nb_vars) false in
