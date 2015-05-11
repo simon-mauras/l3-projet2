@@ -868,7 +868,7 @@ Qed.
 Theorem formula_is_unsat : forall v, false = evaluate v f.
 Proof.
   apply tseitin_unsat.
-  (*apply cnf_is_unsat.*)admit.
+  apply cnf_is_unsat.
 Qed.
 
 Check formula_is_unsat.
