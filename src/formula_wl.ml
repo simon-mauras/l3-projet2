@@ -22,7 +22,6 @@ module Make : Sigs.Formula_type =
     (** Réponses aux différentes requetes. Cela permet d'éviter un grand nombre de calculs redondants *)
     type requestAnswer = {
       mutable unitClauses : (L.t * int) list;
-      mutable freeLiterals : L.t list;
       mutable conflict : int option
     }
 
@@ -32,20 +31,13 @@ module Make : Sigs.Formula_type =
     (** Construit une formule (de type t) à partir d'un élément de type Sigs.cnf *)
     let make out (nb_vars, nb_clauses, clauses) =
       let nbOccur = Array.make (2*nb_vars) 0 in
-      let rec literalList = function
-        | 0 -> []
-        | n -> (L.make n)::(literalList (n-1)) in
-      let compare x y =
-        let vx = nbOccur.(L.id_of_literal x) + nbOccur.(L.id_of_literal (L.neg x)) in
-        let vy = nbOccur.(L.id_of_literal y) + nbOccur.(L.id_of_literal (L.neg y)) in
-        vy - vx in
+      
       let watchedLiterals = Array.make (2*nb_vars) [] in
 
       let tabLiterals = Array.make (2*nb_vars) false in
 
       let answers = {
         unitClauses = [];
-        freeLiterals = [];
         conflict = None
       } in
 
@@ -66,8 +58,6 @@ module Make : Sigs.Formula_type =
             watchedLiterals.(L.id_of_literal x) <- i::watchedLiterals.(L.id_of_literal x);
             watchedLiterals.(L.id_of_literal y) <- i::watchedLiterals.(L.id_of_literal y);
             (lst, Some x, Some y)) clauses) in
-
-      answers.freeLiterals <- List.sort compare (literalList nb_vars);
 
       (tabClauses, watchedLiterals, tabLiterals, answers);;
 
@@ -95,8 +85,7 @@ module Make : Sigs.Formula_type =
     (** Affiche la formule et divers informations associées sur la sortie out *)
     let print out formula = 
       let (clauses, watchedLiterals, literals, answers) = formula in
-      let f x = L.print out x; output_string out " " in
-      let f2 (x,_) = L.print out x; output_string out " " in
+      let f (x,_) = L.print out x; output_string out " " in
       output_string out "----------- Clauses ------------\n";
       Vector.iter (function l, a, b ->
           List.iter (fun x ->
@@ -110,9 +99,7 @@ module Make : Sigs.Formula_type =
               end) l;
           output_string out "\n") clauses;
       output_string out "--------- unitClauses ----------\n";
-      List.iter f2 answers.unitClauses;
-      output_string out "\n--------- freeLiterals ---------\n";
-      List.iter f answers.freeLiterals;
+      List.iter f answers.unitClauses;
       output_string out "\n----------- isFalse ------------\n";
       if answers.conflict <> None
       then output_string out "Formula is false"
@@ -123,13 +110,6 @@ module Make : Sigs.Formula_type =
     let setLiteral x formula = 
       let (clauses, watchedLiterals, literals, answers) = formula in
       literals.(L.id_of_literal x) <- true;
-
-      let rec remove = function
-        | [] -> []
-        | a::l when a = x -> l
-        | a::l when a = L.neg x -> l
-        | a::l -> a::(remove l) in
-      answers.freeLiterals <- remove answers.freeLiterals;
 
       let find cl = match cl with
         | _,None,_ -> None
@@ -171,7 +151,6 @@ module Make : Sigs.Formula_type =
       let (clauses, watchedLiterals, literals, answers) = formula in
       literals.(L.id_of_literal x) <- false;
       answers.unitClauses <- [];
-      answers.freeLiterals <- x::answers.freeLiterals;
       answers.conflict <- None
 
     (** Renvoie vrai si la formule contient une contradiction triviale sous les hypothèses actuelles *)
@@ -186,13 +165,6 @@ module Make : Sigs.Formula_type =
         answers.unitClauses <- l;
         getUnitClause (clauses, watchedLiterals, literals, answers)
       | (x,i)::l -> Some (x,i)
-
-    (** Renvoie un litéral sur lequel aucune hypothèse n'a été faite. *)
-    let getFreeLiteral formula = 
-      let (clauses, watchedLiterals, literals, answers) = formula in
-      match answers.freeLiterals with
-      | [] -> None
-      | x::l -> Some x
     
     (** Renvoie la clause d'identifiant i. *)
     let getClause formula i =

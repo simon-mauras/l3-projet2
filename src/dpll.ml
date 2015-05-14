@@ -4,9 +4,11 @@ module Literal = Sigs.Literal
  
 (** Module de type Sigs.Solver_type *)
 module Make : Sigs.Solver_type =
+  functor (H : Sigs.Heuristic_type) ->
   functor (F : Sigs.Formula_type) ->
   functor (T : Sigs.Theory_type) ->
   struct
+    module Heuristic = H
     module Formula = F
     module Theory = T
     module Graph = Graph.Make(F)
@@ -43,6 +45,7 @@ module Make : Sigs.Solver_type =
     (** Renvoie une solution à la formule donnée. Des informations de debug peuvent être afficher sur la sortie donnée *)
     let solve data tab =
       let form = Formula.make !outDebug data in
+      let heur = Heuristic.make !outDebug data in
       let theor = Theory.make tab in
       let stack = Stack.create () in
       let currentDeductionLevel = ref 0 in
@@ -116,6 +119,7 @@ module Make : Sigs.Solver_type =
                 | None -> continue := false
                 | Some u ->
                   Formula.setLiteral u form;
+                  Heuristic.setLiteral u heur;
                   Theory.setConstraint u theor;
                   Stack.push (Deduction u) stack;
                   incr currentLevel;
@@ -130,10 +134,12 @@ module Make : Sigs.Solver_type =
                 | Bet x, (_, Some lvl), None ->
                   currentDeductionLevel := lvl;
                   Formula.forgetLiteral x form;
+                  Heuristic.forgetLiteral x heur;
                   Theory.forgetConstraint x theor;
                   deductionLevel.(Literal.id_of_literal x) <- None, None;
                   deductionCause.(Literal.id_of_literal x) <- None;
                   Formula.setLiteral (Literal.neg x) form;
+                  Heuristic.setLiteral (Literal.neg x) heur;
                   Theory.setConstraint (Literal.neg x) theor;
                   Stack.push (Deduction (Literal.neg x)) stack;
                   incr currentLevel;
@@ -142,6 +148,7 @@ module Make : Sigs.Solver_type =
                 | Deduction x, (_, Some lvl), None ->
                   currentDeductionLevel := lvl;
                   Formula.forgetLiteral x form;
+                  Heuristic.forgetLiteral x heur;
                   Theory.forgetConstraint x theor;
                   deductionLevel.(Literal.id_of_literal x) <- None, None;
                   deductionCause.(Literal.id_of_literal x) <- None;
@@ -151,6 +158,7 @@ module Make : Sigs.Solver_type =
                   currentDeductionLevel := lvl;
                   if lvl > lvlBacktrack then begin
                     Formula.forgetLiteral x form;
+                    Heuristic.forgetLiteral x heur;
                     Theory.forgetConstraint x theor;
                     deductionLevel.(Literal.id_of_literal x) <- None, None;
                     deductionCause.(Literal.id_of_literal x) <- None;
@@ -162,6 +170,7 @@ module Make : Sigs.Solver_type =
                     | None -> failwith "Error: deductionUip."
                     | Some u ->
                       Formula.setLiteral u form;
+                      Heuristic.setLiteral u heur;
                       Theory.setConstraint u theor;
                       Stack.push (Deduction u) stack;
                       incr currentLevel;
@@ -188,6 +197,7 @@ module Make : Sigs.Solver_type =
                incr statUnitClause;
                modif := true;
                Formula.setLiteral x form;
+               Heuristic.setLiteral x heur;
                Theory.setConstraint x theor;
                Stack.push (Deduction x) stack;
                incr currentLevel;
@@ -195,12 +205,13 @@ module Make : Sigs.Solver_type =
                deductionLevel.(Literal.id_of_literal x) <- Some !currentLevel, Some !currentDeductionLevel);
             (* 2 : On parie sur un litéral si aucune modification n'a été faite *)
             if not !modif then
-              (match Formula.getFreeLiteral form with
+              (match Heuristic.getNextLiteral heur with
                | None -> continue := false (* La formule est satisfaite *)
                | Some x ->
                  incr currentDeductionLevel;
                  incr statFreeLiteral;
                  Formula.setLiteral x form;
+                 Heuristic.setLiteral x heur;
                  Theory.setConstraint x theor;
                  Stack.push (Bet x) stack;
                  incr currentLevel;

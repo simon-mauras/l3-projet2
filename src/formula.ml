@@ -123,21 +123,6 @@ module Make : Sigs.Formula_type =
           then res := Some (SetL.min_elt v, i)
       done;
       !res
-    
-    (** Renvoie un litéral sur lequel aucune hypothèse n'a été faite. *)
-    let getFreeLiteral (_, tabLiterals) =
-      let value = ref min_int in
-      let index = ref 0 in
-      for i = 0 to (Array.length tabLiterals) - 1 do
-        let state,v,_ = tabLiterals.(i) in
-        if v > !value && state = Undefined then begin
-          value := v;
-          index := i;
-        end;
-      done;
-      if !value <> min_int
-      then Some(L.literal_of_id !index)
-      else None
 
     (** Renvoie la clause d'identifiant i. *)
     let getClause (tabClauses,_) i =
@@ -150,6 +135,5 @@ module Make : Sigs.Formula_type =
       try Some (getClause formula (Vector.find (fun (n,_,u) -> n = 0 && u = SetL.empty) tabClauses))
       with Not_found -> None
       
-    
   end
 

@@ -109,6 +109,33 @@ module type Theory_type =
     val getContradiction: t -> (Literal.t list) option
   end
 
+
+(** Signature d'un module implémentant la manipulation de formules *)
+module type Heuristic_type =
+  sig
+    (** Type d'une heuristique *)
+    type t
+
+    (** Construit une formule (de type t) à partir d'un élément de type cnf *)
+    val make: out_channel -> cnf -> t
+
+    (** Ajoute une clause à la formule (apprentissage) *)
+    val addClause: Literal.t list -> t -> unit
+
+    (** Affiche divers informations sur une sortie donnée *)
+    val print: out_channel -> t -> unit
+
+    (** Ajoute l'hypothèse que le litéral fourni soit vrai à la formule *)
+    val setLiteral: Literal.t -> t -> unit
+
+    (** Oublie l'hypothèse faite sur le litéral fourni dans la formule *)
+    val forgetLiteral: Literal.t -> t -> unit
+
+    (** Renvoie un litéral sur lequel aucune hypothèse n'a été faite. *)
+    val getNextLiteral: t -> Literal.t option 
+  end
+
+
 (** Signature d'un module implémentant la manipulation de formules *)
 module type Formula_type =
   sig
@@ -142,15 +169,13 @@ module type Formula_type =
     (** Renvoie un litéral contenu dans une clause unitaire (sous les hypothèses actuelles) *)
     val getUnitClause: t -> (Literal.t * int) option
 
-    (** Renvoie un litéral sur lequel aucune hypothèse n'a été faite. *)
-    val getFreeLiteral: t -> Literal.t option 
-
     (** Renvoie ue clause à partir de son identifiant. *)
     val getClause: t -> int -> Literal.t list
   end
 
 (** Signature d'un module implémentant un algorithme de résolution du problème SAT *)
 module type Solver_type =
+  functor (H : Heuristic_type) ->
   functor (F : Formula_type) ->
   functor (T : Theory_type) ->
   sig

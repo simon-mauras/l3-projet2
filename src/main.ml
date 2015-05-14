@@ -3,7 +3,9 @@ let usage_msg = "Usage: ./resol <options> input_file <output_file>"
 let version = "SAT-solver v1. Remy Grunblatt & Simon Mauras"
 
 (* Arguments (ligne de commande *)
+type heuristic = Rand_heuristic
 type mode = Cnf_mode | Tseitin_mode | Equality_mode | Congruence_mode | Difference_mode
+let arg_heuristic = ref Rand_heuristic
 let arg_mode = ref Cnf_mode
 let arg_debug = ref false
 let arg_wl = ref false
@@ -22,6 +24,7 @@ let doc = [("-wl", Arg.Set arg_wl, "Use watched literals to compute satisfiabili
            ("-equality", Arg.Unit (fun () -> arg_mode := Equality_mode), "Use equality mode");
            ("-congruence", Arg.Unit (fun () -> arg_mode := Congruence_mode), "Use congruence mode");
            ("-difference", Arg.Unit (fun () -> arg_mode := Difference_mode), "Use difference mode");
+           ("-rand", Arg.Unit (fun () -> arg_heuristic := Rand_heuristic), "Use rand heuristic");
            ("-version", Arg.Unit (fun () -> print_endline version; exit 0), "Print version and exit")]
 
 (* Fonction appelée par le parser de la ligne de commande *)
@@ -112,10 +115,11 @@ module Mode_difference =
   end
 
 module Main =
+  functor (H : Sigs.Heuristic_type) ->
   functor (F : Sigs.Formula_type) ->
   functor (M : Mode_type) ->
   struct
-    module Solver = Dpll.Make (F) (M.Theory)
+    module Solver = Dpll.Make (H) (F) (M.Theory)
     let main input output =
       let lexbuf = Lexing.from_channel input in
       let data, tab = M.parse lexbuf in
@@ -140,16 +144,16 @@ let main () =
         then open_out !arg_output
         else stdout in
       match !arg_wl, !arg_mode with
-      | true, Cnf_mode         -> let module M = Main (Formula_wl.Make) (Mode_cnf) in M.main input output
-      | true, Tseitin_mode     -> let module M = Main (Formula_wl.Make) (Mode_tseitin) in M.main input output
-      | true, Equality_mode    -> let module M = Main (Formula_wl.Make) (Mode_equality) in M.main input output
-      | true, Congruence_mode  -> let module M = Main (Formula_wl.Make) (Mode_congruence) in M.main input output
-      | true, Difference_mode  -> let module M = Main (Formula_wl.Make) (Mode_difference) in M.main input output
-      | false, Cnf_mode        -> let module M = Main (Formula.Make) (Mode_cnf) in M.main input output
-      | false, Tseitin_mode    -> let module M = Main (Formula.Make) (Mode_tseitin) in M.main input output
-      | false, Equality_mode   -> let module M = Main (Formula.Make) (Mode_equality) in M.main input output
-      | false, Congruence_mode -> let module M = Main (Formula.Make) (Mode_congruence) in M.main input output
-      | false, Difference_mode -> let module M = Main (Formula.Make) (Mode_difference) in M.main input output
+      | true, Cnf_mode         -> let module M = Main (Heuristic_rand.Make) (Formula_wl.Make) (Mode_cnf) in M.main input output
+      | true, Tseitin_mode     -> let module M = Main (Heuristic_rand.Make) (Formula_wl.Make) (Mode_tseitin) in M.main input output
+      | true, Equality_mode    -> let module M = Main (Heuristic_rand.Make) (Formula_wl.Make) (Mode_equality) in M.main input output
+      | true, Congruence_mode  -> let module M = Main (Heuristic_rand.Make) (Formula_wl.Make) (Mode_congruence) in M.main input output
+      | true, Difference_mode  -> let module M = Main (Heuristic_rand.Make) (Formula_wl.Make) (Mode_difference) in M.main input output
+      | false, Cnf_mode        -> let module M = Main (Heuristic_rand.Make) (Formula.Make) (Mode_cnf) in M.main input output
+      | false, Tseitin_mode    -> let module M = Main (Heuristic_rand.Make) (Formula.Make) (Mode_tseitin) in M.main input output
+      | false, Equality_mode   -> let module M = Main (Heuristic_rand.Make) (Formula.Make) (Mode_equality) in M.main input output
+      | false, Congruence_mode -> let module M = Main (Heuristic_rand.Make) (Formula.Make) (Mode_congruence) in M.main input output
+      | false, Difference_mode -> let module M = Main (Heuristic_rand.Make) (Formula.Make) (Mode_difference) in M.main input output
     with
     | Sys_error s -> prerr_endline s (* no such file or directory, ... *)
   end
