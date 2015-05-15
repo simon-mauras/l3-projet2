@@ -3,7 +3,7 @@ let usage_msg = "Usage: ./resol <options> input_file <output_file>"
 let version = "SAT-solver v1. Remy Grunblatt & Simon Mauras"
 
 (* Arguments (ligne de commande *)
-type heuristic = Rand_heuristic
+type heuristic = Rand_heuristic | Vsids_heuristic
 type mode = Cnf_mode | Tseitin_mode | Equality_mode | Congruence_mode | Difference_mode
 let arg_heuristic = ref Rand_heuristic
 let arg_mode = ref Cnf_mode
@@ -25,6 +25,7 @@ let doc = [("-wl", Arg.Set arg_wl, "Use watched literals to compute satisfiabili
            ("-congruence", Arg.Unit (fun () -> arg_mode := Congruence_mode), "Use congruence mode");
            ("-difference", Arg.Unit (fun () -> arg_mode := Difference_mode), "Use difference mode");
            ("-rand", Arg.Unit (fun () -> arg_heuristic := Rand_heuristic), "Use rand heuristic");
+           ("-vsids", Arg.Unit (fun () -> arg_heuristic := Vsids_heuristic), "Use vsids heuristic");
            ("-version", Arg.Unit (fun () -> print_endline version; exit 0), "Print version and exit")]
 
 (* Fonction appelée par le parser de la ligne de commande *)
@@ -132,6 +133,23 @@ module Main =
                   M.print_solution output l tab
   end
 
+let run heuristic mode wl =
+  let aux (module H : Sigs.Heuristic_type) (module F : Sigs.Formula_type) (module M : Mode_type) =
+  let module Main = Main (H) (F) (M) in Main.main in
+  let aux_mode (module H : Sigs.Heuristic_type) (module F : Sigs.Formula_type) = match mode with
+  | Cnf_mode -> aux (module H) (module F) (module Mode_cnf)
+  | Tseitin_mode -> aux (module H) (module F) (module Mode_tseitin)
+  | Equality_mode -> aux (module H) (module F) (module Mode_equality) 
+  | Congruence_mode -> aux (module H) (module F) (module Mode_congruence)
+  | Difference_mode -> aux (module H) (module F) (module Mode_difference) in
+  let aux_wl (module H : Sigs.Heuristic_type) = match wl with
+  | true -> aux_mode (module H) (module Formula_wl.Make)
+  | false -> aux_mode (module H) (module Formula.Make) in
+  let aux_heuristic () = match heuristic with
+  | Rand_heuristic -> aux_wl (module Heuristic_rand.Make)
+  | Vsids_heuristic -> aux_wl (module Heuristic_vsids.Make) in
+  aux_heuristic ()
+
 (* Fonction principale *)
 let main () =
   Arg.parse doc add_file usage_msg;
@@ -143,17 +161,7 @@ let main () =
       let output = if !arg_output <> ""
         then open_out !arg_output
         else stdout in
-      match !arg_wl, !arg_mode with
-      | true, Cnf_mode         -> let module M = Main (Heuristic_rand.Make) (Formula_wl.Make) (Mode_cnf) in M.main input output
-      | true, Tseitin_mode     -> let module M = Main (Heuristic_rand.Make) (Formula_wl.Make) (Mode_tseitin) in M.main input output
-      | true, Equality_mode    -> let module M = Main (Heuristic_rand.Make) (Formula_wl.Make) (Mode_equality) in M.main input output
-      | true, Congruence_mode  -> let module M = Main (Heuristic_rand.Make) (Formula_wl.Make) (Mode_congruence) in M.main input output
-      | true, Difference_mode  -> let module M = Main (Heuristic_rand.Make) (Formula_wl.Make) (Mode_difference) in M.main input output
-      | false, Cnf_mode        -> let module M = Main (Heuristic_rand.Make) (Formula.Make) (Mode_cnf) in M.main input output
-      | false, Tseitin_mode    -> let module M = Main (Heuristic_rand.Make) (Formula.Make) (Mode_tseitin) in M.main input output
-      | false, Equality_mode   -> let module M = Main (Heuristic_rand.Make) (Formula.Make) (Mode_equality) in M.main input output
-      | false, Congruence_mode -> let module M = Main (Heuristic_rand.Make) (Formula.Make) (Mode_congruence) in M.main input output
-      | false, Difference_mode -> let module M = Main (Heuristic_rand.Make) (Formula.Make) (Mode_difference) in M.main input output
+      (run !arg_heuristic !arg_mode !arg_wl) input output
     with
     | Sys_error s -> prerr_endline s (* no such file or directory, ... *)
   end
