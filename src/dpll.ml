@@ -59,6 +59,7 @@ module Make : Sigs.Solver_type =
       let statUnitClause = ref 0 in
       let statPureLiteral = ref 0 in
       let statClauseLearning = ref 0 in
+      let nb = ref 0 in
       while !continue
       do
         (* On vérifie que les hypothèses actuelles ne rendent pas la formule fausse *)
@@ -110,6 +111,7 @@ module Make : Sigs.Solver_type =
                 then levelBacktrack := Some lvl;
               deductionUip := Some (Literal.neg uip);
               learnedClause := Formula.addClause clause form;
+              Heuristic.addClause clause heur;
             end;
             
             let rec unstack () =
