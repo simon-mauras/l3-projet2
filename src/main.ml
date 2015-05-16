@@ -3,7 +3,7 @@ let usage_msg = "Usage: ./resol <options> input_file <output_file>"
 let version = "SAT-solver v1. Remy Grunblatt & Simon Mauras"
 
 (* Arguments (ligne de commande *)
-type heuristic = Rand_heuristic | Vsids_heuristic
+type heuristic = Dlis_heuristic | Moms_heuristic | Rand_heuristic | Vsids_heuristic
 type mode = Cnf_mode | Tseitin_mode | Equality_mode | Congruence_mode | Difference_mode
 let arg_heuristic = ref Rand_heuristic
 let arg_mode = ref Cnf_mode
@@ -26,6 +26,8 @@ let doc = [("-wl", Arg.Set arg_wl, "Use watched literals to compute satisfiabili
            ("-difference", Arg.Unit (fun () -> arg_mode := Difference_mode), "Use difference mode");
            ("-rand", Arg.Unit (fun () -> arg_heuristic := Rand_heuristic), "Use rand heuristic");
            ("-vsids", Arg.Unit (fun () -> arg_heuristic := Vsids_heuristic), "Use vsids heuristic");
+           ("-moms", Arg.Unit (fun () -> arg_heuristic := Moms_heuristic), "Use moms heuristic");
+           ("-dlis", Arg.Unit (fun () -> arg_heuristic := Dlis_heuristic), "Use dlis heuristic");
            ("-version", Arg.Unit (fun () -> print_endline version; exit 0), "Print version and exit")]
 
 (* Fonction appelée par le parser de la ligne de commande *)
@@ -147,6 +149,8 @@ let run heuristic mode wl =
   | false -> aux_mode (module H) (module Formula.Make) in
   let aux_heuristic () = match heuristic with
   | Rand_heuristic -> aux_wl (module Heuristic_rand.Make)
+  | Moms_heuristic -> aux_wl (module Heuristic_moms.Make)
+  | Dlis_heuristic -> aux_wl (module Heuristic_dlis.Make)
   | Vsids_heuristic -> aux_wl (module Heuristic_vsids.Make) in
   aux_heuristic ()
 
