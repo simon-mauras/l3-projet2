@@ -5,7 +5,7 @@ import numpy
 
 options = ["-cl", "-wl", "-cl -wl"]
 heuristics = ["-dlis", "-vsids", "-moms", "-rand"]
-reps = 5
+reps = 3
 
 
 def bench(cmd_params):
@@ -14,7 +14,7 @@ def bench(cmd_params):
 
 if __name__ == '__main__':
         if(len(sys.argv) < 3):
-                print("Usage : " + sys.argv[0] + " sat_solver files.cnf")
+                print("Usage : " + sys.argv[0] + " sat_solver file1.cnf file2.cnf... > data.csv")
                 sys.exit(1)
         cnffiles = sys.argv[2:]
         solver = sys.argv[1].split()
@@ -30,4 +30,4 @@ if __name__ == '__main__':
                 for i, option in enumerate(options):
                     for j, heuristic in enumerate(heuristics):
                         sys.stdout.write(str(numpy.median(a[i][j]))+",")
-                sys.stdout.write("\n")
+                print("")

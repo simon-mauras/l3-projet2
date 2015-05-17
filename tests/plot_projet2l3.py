@@ -1,9 +1,13 @@
 #!/bin/python2
-
+import sys
 import csv
-# import numpy as np
 import matplotlib.pyplot as plt
 from pylab import *
+
+if(len(sys.argv) != 2):
+        print("Usage : " + sys.argv[0] + " data.csv")
+        sys.exit(1)
+
 
 cldlis = [[], []]
 clvsids = [[], []]
