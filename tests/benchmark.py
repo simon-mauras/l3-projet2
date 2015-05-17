@@ -1,9 +1,10 @@
-#!/bin/python3
+ # -*- coding: utf-8 -*-
+ #!/bin/python3
 import sys
 from timeit import timeit
 import numpy
 
-options = ["-cl", "-wl", "-cl -wl"]
+options = [["-cl"], ["-wl"], ["-cl", "-wl"]]
 heuristics = ["-dlis", "-vsids", "-moms", "-rand"]
 reps = 10
 
@@ -25,7 +26,7 @@ if __name__ == '__main__':
                 for i, option in enumerate(options):
                         for j, heuristic in enumerate(heuristics):
                             for k in range(0, reps):
-                                a[i][j][k] = bench(solver+[option]+[heuristic]+[x])
+                                a[i][j][k] = bench(solver+option+[heuristic]+[x])
                 sys.stdout.write(x + ",")
                 for i, option in enumerate(options):
                     for j, heuristic in enumerate(heuristics):

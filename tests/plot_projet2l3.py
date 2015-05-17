@@ -1,4 +1,4 @@
-#!/bin/python2
+#!/bin/python3
 import sys
 import csv
 import matplotlib.pyplot as plt
@@ -59,6 +59,8 @@ with plt.style.context('fivethirtyeight'):
         plt.semilogy(clrand[0], clrand[1], '-', linewidth=2, label='cl-rand')
         plt.legend(loc = 2)
         plt.title('Comparaisons des heuristiques VSIDS, DLIS et MOMS avec Clause Learning')
+        plt.xlabel('Numéro du test. Se référer à la ligne du fichier source csv')
+        plt.ylabel('Temps en secondes (s)')
         plt.grid(True)
         ax = plt.subplot(111)
         #Shrink current axis by 20%
@@ -75,6 +77,8 @@ with plt.style.context('fivethirtyeight'):
         plt.semilogy(wlrand[0], wlrand[1], '-', linewidth=2, label='wl-rand')
         plt.legend(loc = 2)
         plt.title('Comparaisons des heuristiques VSIDS, DLIS et MOMS avec Watched Literals')
+        plt.xlabel('Numéro du test. Se référer à la ligne du fichier source csv')
+        plt.ylabel('Temps en secondes (s)')
         plt.grid(True)
         ax = plt.subplot(111)
         #Shrink current axis by 20%
@@ -91,6 +95,8 @@ with plt.style.context('fivethirtyeight'):
         plt.semilogy(clwlrand[0], clwlrand[1], '-', linewidth=2, label='clwl-rand')
         plt.legend(loc = 2)
         plt.title('Comparaisons des heuristiques VSIDS, DLIS et MOMS avec Clause Learning et Watched Literals')
+        plt.xlabel('Numéro du test. Se référer à la ligne du fichier source csv')
+        plt.ylabel('Temps en secondes (s)')
         plt.grid(True)
         ax = plt.subplot(111)
         #Shrink current axis by 20%
