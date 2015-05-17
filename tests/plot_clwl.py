@@ -14,7 +14,7 @@ clwlvsids = [[], []]
 clwlmoms = [[], []]
 clwlrand = [[], []]
 
-with open(sys.argv[1], 'rb') as file:
+with open(sys.argv[1], "rt") as file:
     reader = csv.DictReader(file,  delimiter=',')
     for row in reader:
         clwldlis[0].append(clwldlis[0].__len__())
