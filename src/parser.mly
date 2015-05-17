@@ -5,7 +5,7 @@
 %token CNF
 
 %start formula
-%type <int * int * int list list> formula
+%type <Sigs.cnf> formula
 %%
 
 formula:

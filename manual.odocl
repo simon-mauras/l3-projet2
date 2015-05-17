@@ -17,4 +17,13 @@ Theory_default
 Theory_equality
 Theory_congruence
 Theory_difference
-
+Lexer
+Lexer_tseitin
+Lexer_equality
+Lexer_congruence
+Lexer_difference
+Parser
+Parser_tseitin
+Parser_equality
+Parser_congruence
+Parser_difference

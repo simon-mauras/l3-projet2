@@ -4,126 +4,37 @@
 *                                                       *
 *********************************************************
 
-Nous avons découpé les différentes parties de notre projet en modules/fichier.
-Voici une arborescence de quelques dépendances entre les différentes parties :
-
-Main
- |
- +-- Sigs
- |    |
- |    +-- Literal / Literal2
- |
- +-- Tseitin
- |
- +-- Mode_cnf : Mode_type
- |    |
- |    +-- Lexer
- |    +-- Parser
- |    +-- Checker
- |    +-- Theory_default
- |
- +-- Mode_tseitin : Mode_type
- |    |
- |    +-- Lexer_tseitin
- |    +-- Parser_tseitin
- |    +-- Theory_default
- |
- +-- Mode_equality : Mode_type
- |    |
- |    +-- Lexer_equality
- |    +-- Parser_equality
- |    +-- Theory_default
- |
- +-- Mode_equality : Mode_type
- |    |
- |    +-- Lexer_equality
- |    +-- Parser_equality
- |    +-- Theory_default
- |
- +-- Mode_equality : Mode_type
- |    |
- |    +-- Lexer_equality
- |    +-- Parser_equality
- |    +-- Theory_default
- |
- +-- Formula
- |
- +-- Formula_wl
- |
- +-- Main (F : Formula_type) (M : Mode_type)
-      |
-      +-- Dpll (F : Formula_type)
-           |
-           +-- Graph (F : Formula_type)
-           |
-           +-- Graph2 (F : Formula_type)
-           
-Depuis le dernier rendu nous avons fait passer le module Literal en global,
-avoir trop de foncteurs rendait l'implémentation des théories difficile (typage, ...)
-
-De plus pour pouvoir utiliser plusieurs lexers/parsers et plusieures théories de manière générique,
-nous avons ajouter un foncteur au main qui prend en paramètre le mode d'exécution souhaité.
-
-Le module tseitin est utilisée par chaque logique, c'est une couche intermédiaire entre le parsing et la théorie 
-
-Nous avons également réimplémenté l'apprentissage de clause. Le module Graph a une complexité quadratique
-en le nombre de variable ce qui est beaucoup trop pour nos tests sur les différentes théories.
-La version Graph2 est linéaire en le nombre de variables dans la clause apprise mais ne permet
-pas d'exporter le graphe en mode interactif (ce qui n'est pas gênant...)
+Depuis le dernier rendu nous avons ajouté la possibilité d'avoir une documentation
+du projet (avec ocamldoc). La commande "make doc" permet de générer une doc à ouvrir
+avec un navigateur internet (manual.docdir/index.html) 
 
 
 *********************************************************
 *                                                       *
-*               CHOIX D'IMPLÉMENTATION                  *
+*                          COQ                          *
 *                                                       *
 *********************************************************
 
---------------- TSEITIN ---------------------------------
+Nous avons préféré la partie 4 (Coq) à la partie 3 (Simplexe). Malheureusement l'export
+d'une preuve n'est pas encore possible. Les différentes preuves nous ont en effet pris
+un temps conséquent.
 
-Le module tseitin utilise une map (abr) pour référencer les atomes (litéraux)
-Il se contente de prendre une formule quelconque et d'en retourner une sous forme
-normale conjonctive en appliquant la transformation demandée.
-Nous avons utilisé une table de Karnaugh pour obtenir l'équivalent de l'implication :
-(C = A => B) <=> ((-C \/ -A \/ -B) /\ (C \/ A) /\ (C \/ -B))
+Il est possible de regarder ce à quoi aurait du ressembler une preuve exportée.
 
---------------- EGALITÉ ---------------------------------
+Dans le cas satisfiable, il suffit d'exporter le certificat (dans la fonction v du fichier sat.v)
+Coq etant capable de simplifier une formule, il est facile de montrer la satisfiabilité d'une formule
+ou d'une liste de clauses.
 
-Nous avons implémenté l'union find décrit dans le fichier EgaliteCongruence.pdf
-Les deux points clés sont le backtrack et l'obtention de la contradiction.
-- Pour le backtrack nous avons opté pour ne pas utiliser la compression de chemin.
-  Nous stockons pour chaque lien [a -> find.(a)] sa cause (litéral).
-- Pour obtenir la clause il nous faut faire attention au cas suivant :
-  {a -> a, b -> b, c -> c}
-  b = c
-  {a -> a, b -> b, c -> b (à cause de b = c)}
-  a = c
-  {a -> a, b -> a (à cause de a = c), c -> b (à cause de b = c)}
-  a != b
-  Si on se contente de remonter l'arbre on obtient comme conflit (a != b /\ a = c)
-  Il nous faut donc redescendre dans l'arbre pour obtenir le bon conflit.
-  
---------------- CONGRUENCE ------------------------------
+Dans le cas non satisfiable nous avons réfléchi à la manière de prouver qu'une liste de clause n'est
+pas satisfiable. Une des méthodes est de procéder par déduction successive des clauses apprises.
+En effet les clauses initiales permettent dans ce cas de déduire la clause vide qui est par définition
+non satisfiable. Un des écueils est de raisonner par l'absurde (Coq refuse les preuves non constructives)
+C'est la partie que nous avons pas eu le temps de faire.
 
-Nous avons adapté la théorie de l'égalité en utilisant l'algorithme décrit dans le
-fichier CongruenceClosure.pdf. Cependant au lieu d'avoir recours à des fonctions de
-hashage nous avons utilisé la relation d'ordre disponible par défaut (Pervasives.compare)
-afin de garder une complexité linéaire dans la fonction merge.
-
-Il est fort probable qu'en activant le clause learning les résultats soient faux car nous
-n'avons pas eu le temps de généraliser la technique décrite pour obtenir une contradiction
-dans la théorie de l'égalité.
-
---------------- DIFFERENCE ------------------------------
-
-Nous avons utilisé l'idée exposée dans le fichier Differences.pdf.
-Nous n'avons pas trouvé d'algorithme incrémental efficace pour implémenter la théorie de la différence.
-L'algorithme utilisé est donc celui de Bellman-Ford avec une dernière itération qui permet de détecter
-un éventuel cycle de poids négatif.
-Pour obtenir la contradiction à partir de l'algorithme de Bellman-Ford, une méthode (qui peux ne pas fonctionner)
-est d'initialiser tous les poids à 0 et de retenir pour chaque noeud son prédecesseur. En effet des modifications
-peuvent être faites simultanément à pusieurs endroits du graphe à chaque itération.
-Nous avons donc utilisé le partage de donnée persistantes d'OCaml pour garder pour chaque noeud le chemin qui permet
-d'y accéder. (Le partage des données assure que la complexité temporelle est conservée)
+Une fois que nous sommes capables de faire ça de manière automatique se pose la question de prouver
+qu'une formule (sous forme arborescente) n'est pas satisfiable. C'est la grosse partie que nous avons aborder,
+à savoir la preuve que la transformation de tseitin converve le caractère satisfiable.
+Un exemple de formule non satisfiable est donné dans le fichier unsat.v.
 
 
 *********************************************************
@@ -135,6 +46,7 @@ d'y accéder. (Le partage des données assure que la complexité temporelle est 
 Pour tester la correction de l'algorithme DPLL (rendu 2)
 
 make # Compilation du code
+make doc # Génération de la doc
 
 cd tests/cnf
 ./tests.sh # Test des exemples basiques
@@ -150,43 +62,14 @@ cd ..
 ./tests.sh # Test sur tous les exemples
 nano tests.sh # Ligne 5 : Par défaut le script utilise les options -wl -cl 
 
-*********************************************************
-*                                                       *
-*                          TESTS                        *
-*                                                       *
-*********************************************************
-
-Comment tester les différentes logiques ? Nous avons essayé de trouver des tests dont la solution a un sens.
-
-Exemples de test :
---------------------------------------------------------
-# Ici nous avons opté pour la résolution d'un sudoku.
-# Un petit générateur en OCaml génère un fichier test (.equ)
-cd tests/equality/generator
-make
-time ../../../resol -equality -wl -cl wrong_sudoku.equ # UNSATISFIABLE, 0.35s
-time ../../../resol -equality -wl -cl complete_sudoku.equ complete_sudoku.out # SATISFIABLE, 0.40s
-time ../../../resol -equality -wl -cl incomplete_sudoku.equ incomplete_sudoku.out # SATISFIABLE, 6.3s
-diff incomplete_sudoku.out complete_sudoku.out # The sudoku is correctly solved !
-rm *.out # Delete temporary files
---------------------------------------------------------
-# Ici pour tester la correction de la théorie, on calcule (et on vérifie) si deux entiers sont premiers entre eux
-cd tests/congruence/generator
-./coprime.sh # The theory is correctly implemented
---------------------------------------------------------
-
 
 *********************************************************
 *                                                       *
-*                  IDÉE D'AMÉLIORATION                  *
+*                        MOULINETTES                    *
 *                                                       *
 *********************************************************
 
-L'implémentation de la théorie de la différence n'est pas vraiment incrémentale, de nombreux calculs sont
-fait à chaque appel de la fonction getContradiction. Il peut être possible de ne regarder que les chemins
-du graphe utilisant au moins un literal ayant été mis à vrai depuis le dernier appel.
-
-La contradiction renvoyée par la théorie de la congruence peut être fausse (des littéraux manquent pour obtenir une contradiction)
+TODO
 
 
 *********************************************************
@@ -195,8 +78,7 @@ La contradiction renvoyée par la théorie de la congruence peut être fausse (d
 *                                                       *
 *********************************************************
 
-Rémy s'est occupé du module tseitin et de la logique de la différence
-Simon s'est occupé de la logique de l'égalité/congruence ainsi que de la connexion entre les différentes parties.
-
+Rémy a implémenté les différentes heuristiques et a lancé les moulinettes (graphes, ...)
+Simon a d'incorporé les heuristiques à l'algo DPLL et s'est occupé de la partie Coq.
 Le partage des fichier s'est faite à l'aide du dépôt Git le l'association Aliens.
 
