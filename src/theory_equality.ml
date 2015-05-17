@@ -1,12 +1,12 @@
-(** Module implémentant la theorie de l'égalité *)
+(** Module implementant la theorie de l'egalite *)
 
-module L = Sigs.Literal
+open Sigs
 
-(** Module de type Sigs.Theory_type *)
-module Make : Sigs.Theory_type =
+(** Module de type Theory_type *)
+module Make : Theory_type =
   struct
     
-    (** Module représentant un terme de la théorie de l'égalité *)
+    (** Module representant un terme de la theorie de l'egalite *)
     module T =
       struct
       
@@ -19,19 +19,19 @@ module Make : Sigs.Theory_type =
           | Neq (a, b) -> Eq (a, b)
         
         let make x =
-          let module S = Sigs.Data.Equality in
+          let module S = Data.Equality in
           let aux_term = function
           | S.Eq (S.X a, S.X b) -> Eq (X a, X b)
           | S.Neq (S.X a, S.X b) -> Neq (X a, X b) in
           let aux_parsing = function
-          | Sigs.Parsing_equality a -> aux_term a
+          | Parsing_equality a -> aux_term a
           | _ -> failwith "Wrong parser" in
           let rec aux_formula = function
-          | Sigs.And(a, b) -> Sigs.And(aux_formula a, aux_formula b)
-          | Sigs.Or(a, b) -> Sigs.Or(aux_formula a, aux_formula b)
-          | Sigs.Imp(a, b) -> Sigs.Imp(aux_formula a, aux_formula b)
-          | Sigs.Not(a) -> Sigs.Not(aux_formula a)
-          | Sigs.Atom(a) -> Sigs.Atom(aux_parsing a) in
+          | And(a, b) -> And(aux_formula a, aux_formula b)
+          | Or(a, b) -> Or(aux_formula a, aux_formula b)
+          | Imp(a, b) -> Imp(aux_formula a, aux_formula b)
+          | Not(a) -> Not(aux_formula a)
+          | Atom(a) -> Atom(aux_parsing a) in
           aux_formula x
           
         let compare = Pervasives.compare
@@ -59,7 +59,7 @@ module Make : Sigs.Theory_type =
     type t = t_literal * t_var * t_equality * t_disequality
     
     (** Un ensemble de contraintes vide *)
-    let make tab =
+    let make tab : t =
     
       let nbLiterals = (2 * Array.length tab) - 2 in
       let tabLiterals = Array.make nbLiterals None in
@@ -92,7 +92,7 @@ module Make : Sigs.Theory_type =
     
         
     (** Ajoute une contrainte *)
-    let setConstraint lit (tabLiterals, (mapVars, tabVars), (find, cause, size, equality), disequality) =
+    let setConstraint lit (tabLiterals, (mapVars, tabVars), (find, cause, size, equality), disequality : t) =
       let rec root i =
         if i = find.(i)
           then i
@@ -122,7 +122,7 @@ module Make : Sigs.Theory_type =
       | None -> ()
     
     (** Oublie une contrainte *)
-    let forgetConstraint lit (tabLiterals, (mapVars, tabVars), (find, cause, size, equality), disequality) =
+    let forgetConstraint lit (tabLiterals, (mapVars, tabVars), (find, cause, size, equality), disequality : t) =
       let idLit = L.id_of_literal lit in
       match tabLiterals.(idLit) with
       | Some x -> begin
@@ -138,7 +138,7 @@ module Make : Sigs.Theory_type =
       | None -> ()
     
     (** Renvoie une eventuelle contradiction entre les contraintes actuelles *)
-    let getContradiction (tabLiterals, (mapVars, tabVars), (find, cause, size, equality), disequality) =
+    let getContradiction (tabLiterals, (mapVars, tabVars), (find, cause, size, equality), disequality : t) =
     
       let rec root i =
         if i <> find.(i)

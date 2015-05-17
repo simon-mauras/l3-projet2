@@ -1,3 +1,5 @@
+(** Module implementant des tableau dynamique (de taille variable) *)
+
 type 'a vector = 'a array ref * int ref
 
 exception Not_found

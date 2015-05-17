@@ -1,25 +1,25 @@
-(** Module permettant la manipulation de formules sous forme normale conjonctive avec le litéraux surveillés *)
+(** Module permettant la manipulation de formules sous forme normale conjonctive avec le literaux surveilles *)
 
-module L = Sigs.Literal
+open Sigs
 
-(** Module de type Sigs.Formla_type *)
-module Make : Sigs.Formula_type =
+(** Module de type Formula_type *)
+module Make : Formula_type =
   struct
 
     (** Informations sur les clauses. Le tableau contient pour chaque clause :
-        - La liste des litéraux de la clause
-        - Les itéraux surveillés dans cette clause (si sa taille est >= 2) *)
+        - La liste des literaux de la clause
+        - Les iteraux surveilles dans cette clause (si sa taille est >= 2) *)
     type clausesArray = (L.t list * L.t option * L.t option) Vector.vector
 
-    (** Information sur les litéraux surveillés.
-        Le tableau contient pour chaque literal la liste des clauses dans lesquelles il est surveillé *)
+    (** Information sur les literaux surveilles.
+        Le tableau contient pour chaque literal la liste des clauses dans lesquelles il est surveille *)
     type watchedLiteralsArray = int list array
 
-    (** Informations sur les litéraux.
-        Le tableau contient pour chaque litéral un booléen étant vrai ssi le litéral a été mis à vrai *)
+    (** Informations sur les literaux.
+        Le tableau contient pour chaque literal un booleen etant vrai ssi le literal a ete mis a vrai *)
     type literalsArray = bool array
 
-    (** Réponses aux différentes requetes. Cela permet d'éviter un grand nombre de calculs redondants *)
+    (** Reponses aux differentes requetes. Cela permet d'eviter un grand nombre de calculs redondants *)
     type requestAnswer = {
       mutable unitClauses : (L.t * int) list;
       mutable conflict : int option
@@ -28,7 +28,7 @@ module Make : Sigs.Formula_type =
     (** Type d'une formule *)
     type t = clausesArray * watchedLiteralsArray * literalsArray * requestAnswer
 
-    (** Construit une formule (de type t) à partir d'un élément de type Sigs.cnf *)
+    (** Construit une formule (de type t) a partir d'un element de type cnf *)
     let make out (nb_vars, nb_clauses, clauses) =
       let nbOccur = Array.make (2*nb_vars) 0 in
       
@@ -64,7 +64,7 @@ module Make : Sigs.Formula_type =
     (** Renvoie le nombre de variables dans la formule *)
     let getNbVariables (_,_,literals,_) = (Array.length literals) / 2
     
-    (** Ajoute une clause à la formule (apprentissage) *)
+    (** Ajoute une clause a la formule (apprentissage) *)
     let addClause cl formula =
       let (clauses, watchedLiterals, literals, answers) = formula in
       let id = Vector.length clauses in
@@ -82,7 +82,7 @@ module Make : Sigs.Formula_type =
                             (cl, Some x, Some y));
       id (* On retourne l'identifiant de la nouvelle clause *)
 
-    (** Affiche la formule et divers informations associées sur la sortie out *)
+    (** Affiche la formule et divers informations associees sur la sortie out *)
     let print out formula = 
       let (clauses, watchedLiterals, literals, answers) = formula in
       let f (x,_) = L.print out x; output_string out " " in
@@ -106,7 +106,7 @@ module Make : Sigs.Formula_type =
       else output_string out "Can't assert that formula is false";
       output_string out "\n--------------------------------\n"
 
-    (** Ajoute à la formule l'hypothèse que le litéral x soit vrai *)
+    (** Ajoute a la formule l'hypothese que le literal x soit vrai *)
     let setLiteral x formula = 
       let (clauses, watchedLiterals, literals, answers) = formula in
       literals.(L.id_of_literal x) <- true;
@@ -140,23 +140,23 @@ module Make : Sigs.Formula_type =
              then () (* La clause est daje satisfaite *)
              else if literals.(L.id_of_literal (L.neg a))
              then answers.conflict <- Some i (* La clause est fausse *)
-             else answers.unitClauses <- (a,i)::answers.unitClauses); (* Il reste une unique manière pour satisfaire la clause *)
+             else answers.unitClauses <- (a,i)::answers.unitClauses); (* Il reste une unique maniere pour satisfaire la clause *)
           true (* On garde le pointeur actuel car on en a pas trouve d'autre... *)
       in
       watchedLiterals.(L.id_of_literal (L.neg x)) <-
         List.filter update watchedLiterals.(L.id_of_literal (L.neg x))
 
-    (** Oublie l'hypothèse faite sur le litéral x dans la formule *)
+    (** Oublie l'hypothese faite sur le literal x dans la formule *)
     let forgetLiteral x formula = 
       let (clauses, watchedLiterals, literals, answers) = formula in
       literals.(L.id_of_literal x) <- false;
       answers.unitClauses <- [];
       answers.conflict <- None
 
-    (** Renvoie vrai si la formule contient une contradiction triviale sous les hypothèses actuelles *)
+    (** Renvoie vrai si la formule contient une contradiction triviale sous les hypotheses actuelles *)
     let isFalse (_,_,_,answers) = answers.conflict <> None 
 
-    (** Renvoie un litéral contenu dans une clause unitaire (sous les hypothèses actuelles) *)
+    (** Renvoie un literal contenu dans une clause unitaire (sous les hypotheses actuelles) *)
     let rec getUnitClause formula = 
       let (clauses, watchedLiterals, literals, answers) = formula in
       match answers.unitClauses with
@@ -171,7 +171,7 @@ module Make : Sigs.Formula_type =
       let (clauses, watchedLiterals, literals, answers) = formula in
       let cl,_,_ = Vector.get clauses i in cl
     
-    (** Renvoie la clause responsable d'une éventuelle contradiction *)
+    (** Renvoie la clause responsable d'une eventuelle contradiction *)
     let getConflict formula =
       let (clauses, watchedLiterals, literals, answers) = formula in
       match answers.conflict with

@@ -1,35 +1,35 @@
 (** Module implementant le choix du prochain paris *)
 
-module L = Sigs.Literal
+open Sigs
 
-(** Module de type Sigs.Heuristic_type *)
-module Make : Sigs.Heuristic_type =
+(** Module de type Heuristic_type *)
+module Make : Heuristic_type =
   struct
   
   type state = True | False | Undefined
   
   type t = float array * state array * int ref
   
-  let make out (nb_vars, nb_clauses, clauses) =
+  let make (out : out_channel) (nb_vars, nb_clauses, clauses : cnf) : t =
     let tabScores = Array.make (2*nb_vars) 0. in
     let tabStates = Array.make (2*nb_vars) Undefined in
     (tabScores, tabStates, ref 0)
   
-  let addClause cl (tabScores, tabStates, count) =
+  let addClause cl (tabScores, tabStates, count : t) =
     List.iter (fun x -> let i = L.id_of_literal x in
                         tabScores.(i) <- 1. +. tabScores.(i)) cl
     
-  let print out (tabScores, tabStates, count) = ()
+  let print (out : out_channel) (tabScores, tabStates, count : t) = ()
   
-  let setLiteral x (tabScores, tabStates, count) =
+  let setLiteral x (tabScores, tabStates, count : t) =
     tabStates.(L.id_of_literal x) <- True;
     tabStates.(L.id_of_literal (L.neg x)) <- False
     
-  let forgetLiteral x (tabScores, tabStates, count) =
+  let forgetLiteral x (tabScores, tabStates, count : t) =
     tabStates.(L.id_of_literal x) <- Undefined;
     tabStates.(L.id_of_literal (L.neg x)) <- Undefined
   
-  let getNextLiteral (tabScores, tabStates, count) =
+  let getNextLiteral (tabScores, tabStates, count : t) =
     decr count;
     if !count <= 0 then begin
       count := 20;

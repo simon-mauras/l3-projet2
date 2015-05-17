@@ -1,15 +1,15 @@
-(** Fichier contenant les types et signatures utilisées dans le projet *)
+(** Fichier contenant les types et signatures utilisees dans le projet *)
 
-(** Type d'une clause renvoyée par le parser *)
+(** Type d'une clause renvoyee par le parser *)
 type clause = int list
 
-(** Type d'une formule cnf renvoyée par le parser *)
+(** Type d'une formule cnf renvoyee par le parser *)
 type cnf = int * int * clause list
 
-(** Type d'un certificat renvoyé par le solver *)
+(** Type d'un certificat renvoye par le solver *)
 type certificate = int list
 
-(** Type d'une solution pour une formule donnée : il peut exister ou non un certificat *)
+(** Type d'une solution pour une formule donnee : il peut exister ou non un certificat *)
 type solution = certificate option
 
 module Data = struct
@@ -45,7 +45,7 @@ type parsing =
   | Parsing_congruence of Data.Congruence.t
   | Parsing_difference of Data.Difference.t
 
-(** Type de la représentation d'une formule logique quelconque **)
+(** Type de la representation d'une formule logique quelconque *)
 type 'a formula =
   | And of 'a formula * 'a formula
   | Or of 'a formula * 'a formula
@@ -53,39 +53,41 @@ type 'a formula =
   | Not of 'a formula
   | Atom of 'a
 
-(** Signature d'un module implémentant la manipulation de litéraux *)
+(** Signature d'un module implementant la manipulation de literaux *)
 module type Literal_type =
 sig
   (** Type d'un literal *)
   type t
 
-  (** Construit un litéral (de type t) à partir d'un entier (Format DIMACS CNF) *)
+  (** Construit un literal (de type t) a partir d'un entier (Format DIMACS CNF) *)
   val make : int -> t
 
-  (** Renvoie un entier représentant le litéral (au format DIMACS CNF) *)
+  (** Renvoie un entier representant le literal (au format DIMACS CNF) *)
   val to_int : t -> int
 
-  (** Affiche un litéral sur une sortie donnée *)
+  (** Affiche un literal sur une sortie donnee *)
   val print : out_channel -> t -> unit
 
-  (** Fonction de comparaison entre deux litéraux (utile pour construire un Set de litéraux) *)
+  (** Fonction de comparaison entre deux literaux (utile pour construire un Set de literaux) *)
   val compare : t -> t -> int
 
-  (** Renvoi la négation d'un litéral *)
+  (** Renvoi la negation d'un literal *)
   val neg : t -> t
 
-  (** Renvoie un identifiant associé au litéral (entier entre 0 et 2*nbVars+1 si les variables sont numérotées entre 1 et nbVars) *)
+  (** Renvoie un identifiant associe au literal (entier entre 0 et 2*nbVars+1 si les variables sont numerotees entre 1 et nbVars) *)
   val id_of_literal : t -> int
 
-  (** Renvoie le litéral associé à un identifiant donné *)
+  (** Renvoie le literal associe a un identifiant donne *)
   val literal_of_id : int -> t
 end
 
-module Literal : Literal_type = Literal2.Make
+(** Module par defaut pour la manipulation de literaux *)
+module L : Literal_type = Literal2.Make
 
+(** Signature d'un module implementant une theorie *)
 module type Theory_type =
   sig
-    (** Module représentant un terme de la théorie *)
+    (** Module representant un terme de la theorie *)
     module T : sig
       type t
       val make : parsing formula -> t formula
@@ -100,80 +102,80 @@ module type Theory_type =
     val make : T.t option array -> t
     
     (** Ajoute une contrainte *)
-    val setConstraint: Literal.t -> t -> unit
+    val setConstraint: L.t -> t -> unit
     
     (** Oublie une contrainte *)
-    val forgetConstraint: Literal.t -> t -> unit
+    val forgetConstraint: L.t -> t -> unit
     
     (** Renvoie une eventuelle contradiction entre les contraintes actuelles *)
-    val getContradiction: t -> (Literal.t list) option
+    val getContradiction: t -> (L.t list) option
   end
 
 
-(** Signature d'un module implémentant la manipulation de formules *)
+(** Signature d'un module implementant l'heuristique pour le choix du prochain paris *)
 module type Heuristic_type =
   sig
     (** Type d'une heuristique *)
     type t
 
-    (** Construit une formule (de type t) à partir d'un élément de type cnf *)
+    (** Construit une formule (de type t) a partir d'un element de type cnf *)
     val make: out_channel -> cnf -> t
 
-    (** Ajoute une clause à la formule (apprentissage) *)
-    val addClause: Literal.t list -> t -> unit
+    (** Ajoute une clause a la formule (apprentissage) *)
+    val addClause: L.t list -> t -> unit
 
-    (** Affiche divers informations sur une sortie donnée *)
+    (** Affiche divers informations sur une sortie donnee *)
     val print: out_channel -> t -> unit
 
-    (** Ajoute l'hypothèse que le litéral fourni soit vrai à la formule *)
-    val setLiteral: Literal.t -> t -> unit
+    (** Ajoute l'hypothese que le literal fourni soit vrai a la formule *)
+    val setLiteral: L.t -> t -> unit
 
-    (** Oublie l'hypothèse faite sur le litéral fourni dans la formule *)
-    val forgetLiteral: Literal.t -> t -> unit
+    (** Oublie l'hypothese faite sur le literal fourni dans la formule *)
+    val forgetLiteral: L.t -> t -> unit
 
-    (** Renvoie un litéral sur lequel aucune hypothèse n'a été faite. *)
-    val getNextLiteral: t -> Literal.t option 
+    (** Renvoie un literal sur lequel aucune hypothese n'a ete faite. *)
+    val getNextLiteral: t -> L.t option 
   end
 
 
-(** Signature d'un module implémentant la manipulation de formules *)
+(** Signature d'un module implementant la manipulation de formules *)
 module type Formula_type =
   sig
     (** Type d'une formule *)
     type t
 
-    (** Construit une formule (de type t) à partir d'un élément de type cnf *)
+    (** Construit une formule (de type t) a partir d'un element de type cnf *)
     val make: out_channel -> cnf -> t
 
     (** Renvoie le nombre de variables dans la formule *)
     val getNbVariables: t -> int
 
-    (** Ajoute une clause à la formule (apprentissage) *)
-    val addClause: Literal.t list -> t -> int
+    (** Ajoute une clause a la formule (apprentissage) *)
+    val addClause: L.t list -> t -> int
 
-    (** Affiche une formule et divers informations associées sur une sortie donnée *)
+    (** Affiche une formule et divers informations associees sur une sortie donnee *)
     val print: out_channel -> t -> unit
 
-    (** Ajoute l'hypothèse que le litéral fourni soit vrai à la formule *)
-    val setLiteral: Literal.t -> t -> unit
+    (** Ajoute l'hypothese que le literal fourni soit vrai a la formule *)
+    val setLiteral: L.t -> t -> unit
 
-    (** Oublie l'hypothèse faite sur le litéral fourni dans la formule *)
-    val forgetLiteral: Literal.t -> t -> unit
+    (** Oublie l'hypothese faite sur le literal fourni dans la formule *)
+    val forgetLiteral: L.t -> t -> unit
 
-    (** Renvoie vrai si la formule contient une contradiction triviale sous les hypothèses actuelles *)
+    (** Renvoie vrai si la formule contient une contradiction triviale sous les hypotheses actuelles *)
     val isFalse: t -> bool
 
-    (** Renvoie le literal et la clause responsable d'une éventuelle contradiction *)
-    val getConflict: t -> Literal.t list option
+    (** Renvoie le literal et la clause responsable d'une eventuelle contradiction *)
+    val getConflict: t -> L.t list option
 
-    (** Renvoie un litéral contenu dans une clause unitaire (sous les hypothèses actuelles) *)
-    val getUnitClause: t -> (Literal.t * int) option
+    (** Renvoie un literal contenu dans une clause unitaire (sous les hypotheses actuelles) *)
+    val getUnitClause: t -> (L.t * int) option
 
-    (** Renvoie ue clause à partir de son identifiant. *)
-    val getClause: t -> int -> Literal.t list
+    (** Renvoie ue clause a partir de son identifiant. *)
+    val getClause: t -> int -> L.t list
   end
 
-(** Signature d'un module implémentant un algorithme de résolution du problème SAT *)
+(** Signature d'un module implementant un algorithme de resolution du probleme SAT *)
 module type Solver_type =
   functor (H : Heuristic_type) ->
   functor (F : Formula_type) ->
@@ -189,7 +191,7 @@ module type Solver_type =
     (** Active l'apprentissage de clause interactif *)
     val setClauseLearningInteractive: bool -> unit
 
-    (** Renvoie une solution à la formule donnée. Des informations de debug peuvent être afficher sur la sortie donnée *)
+    (** Renvoie une solution a la formule donnee. Des informations de debug peuvent être afficher sur la sortie donnee *)
     val solve: cnf -> T.T.t option array -> solution
   end
 

@@ -1,9 +1,9 @@
-(** Module implémentant la génération de graphes *)
+(** Module implementant la manipulation a la volee du graphe des conflits *)
 
-module L = Sigs.Literal
+open Sigs
 
-(** Module de type Sigs.Solver_type *)
-module Make (F: Sigs.Formula_type) =
+(** Module implementant le choix de la clause a apprendre *)
+module Make (F: Formula_type) =
 struct
 
   (** Type d'un graphe *)
@@ -19,7 +19,7 @@ struct
     | [] -> res in
     uniq [] (List.sort cmp l)
   
-  (** Construit un graphe (de type t) à partir d'un tableau de litéraux (un noeud par litéral) en y ajoutant un symbole d'absurdité *)
+  (** Construit un graphe (de type t) a partir d'un tableau de literaux (un noeud par literal) en y ajoutant un symbole d'absurdite *)
   let make conflict formula deductionCause deductionLevel currentDeductionLevel =
   
     let clause = ref [] in

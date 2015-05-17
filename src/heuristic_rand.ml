@@ -1,16 +1,16 @@
 (** Module implementant le choix du prochain paris *)
 
-module L = Sigs.Literal
+open Sigs
 
-(** Module de type Sigs.Heuristic_type *)
-module Make : Sigs.Heuristic_type =
+(** Module de type Heuristic_type *)
+module Make : Heuristic_type =
   struct
   
   type state = True | False | Undefined
   
   type t = int Vector.vector * int list array * state array
   
-  let make out (nb_vars, nb_clauses, clauses) =
+  let make (out : out_channel) (nb_vars, nb_clauses, clauses : cnf) : t =
     Random.init 42;
     let tabClauses = Vector.make (nb_clauses) 0 in
     let tabOccurences = Array.make (2*nb_vars) [] in
@@ -19,26 +19,26 @@ module Make : Sigs.Heuristic_type =
                                                  tabOccurences.(i) <- id::tabOccurences.(i)) cl) clauses;
     (tabClauses, tabOccurences, tabStates)
   
-  let addClause cl (tabClauses, tabOccurences, tabStates) =
+  let addClause cl (tabClauses, tabOccurences, tabStates : t) =
     let id = Vector.length tabClauses in
     List.iter (fun x -> let i = L.id_of_literal x in
                         tabOccurences.(i) <- id::tabOccurences.(i)) cl;
     let nb = List.fold_left (fun nb x -> if tabStates.(L.id_of_literal x) = True then nb + 1 else nb) 0 cl in
     Vector.add tabClauses nb
     
-  let print out (tabClauses, tabOccurences, tabStates) = ()
+  let print (out : out_channel) (tabClauses, tabOccurences, tabStates : t) = ()
   
-  let setLiteral x (tabClauses, tabOccurences, tabStates) =
+  let setLiteral x (tabClauses, tabOccurences, tabStates : t) =
     tabStates.(L.id_of_literal x) <- True;
     tabStates.(L.id_of_literal (L.neg x)) <- False;
     List.iter (fun i -> Vector.set tabClauses i ((Vector.get tabClauses i) + 1)) tabOccurences.(L.id_of_literal x)
     
-  let forgetLiteral x (tabClauses, tabOccurences, tabStates) =
+  let forgetLiteral x (tabClauses, tabOccurences, tabStates : t) =
     tabStates.(L.id_of_literal x) <- Undefined;
     tabStates.(L.id_of_literal (L.neg x)) <- Undefined;
     List.iter (fun i -> Vector.set tabClauses i ((Vector.get tabClauses i) - 1)) tabOccurences.(L.id_of_literal x)
   
-  let getNextLiteral (tabClauses, tabOccurences, tabStates) =
+  let getNextLiteral (tabClauses, tabOccurences, tabStates : t) =
     let lst = ref [] in
     Array.iteri (fun i s -> if s = Undefined then lst := i :: !lst) tabStates;
     if !lst = []

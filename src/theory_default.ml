@@ -1,24 +1,26 @@
-(** Module implémentant la theorie par défaut *)
+(** Module implementant la theorie par defaut *)
 
-(** Module de type Sigs.Theory_type *)
-module Make : Sigs.Theory_type =
+open Sigs
+
+(** Module de type Theory_type *)
+module Make : Theory_type =
   struct
 
-    (** Module représentant un terme de la théorie par défaut *)
+    (** Module representant un terme de la theorie par defaut *)
     module T = struct
     
       type t = string
       
       let make x =
         let aux_parsing = function
-        | Sigs.Parsing_default s -> s
+        | Parsing_default s -> s
         | _ -> failwith "Wrong parser" in
         let rec aux_formula = function
-        | Sigs.And(a, b) -> Sigs.And(aux_formula a, aux_formula b)
-        | Sigs.Or(a, b) -> Sigs.Or(aux_formula a, aux_formula b)
-        | Sigs.Imp(a, b) -> Sigs.Imp(aux_formula a, aux_formula b)
-        | Sigs.Not(a) -> Sigs.Not(aux_formula a)
-        | Sigs.Atom(a) -> Sigs.Atom(aux_parsing a) in
+        | And(a, b) -> And(aux_formula a, aux_formula b)
+        | Or(a, b) -> Or(aux_formula a, aux_formula b)
+        | Imp(a, b) -> Imp(aux_formula a, aux_formula b)
+        | Not(a) -> Not(aux_formula a)
+        | Atom(a) -> Atom(aux_parsing a) in
         aux_formula x
       
       let compare = String.compare
@@ -27,14 +29,14 @@ module Make : Sigs.Theory_type =
       
     end
     
-    (** Type d'un terme de la logique par défaut *)
+    (** Type d'un terme de la logique par defaut *)
     type term = string
     
     (** Type d'un ensemble de contraintes *)
     type t = unit
     
     (** Un ensemble de contraintes vide *)
-    let make _ = ()
+    let make _ : t = ()
     
     (** Ajoute une contrainte *)
     let setConstraint l e = ()

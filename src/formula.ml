@@ -1,9 +1,9 @@
 (** Module permettant la manipulation de formules sous forme normale conjonctive *)
 
-module L = Sigs.Literal
+open Sigs
 
-(** Module de type Sigs.Formla_type *)
-module Make : Sigs.Formula_type =
+(** Module de type Formula_type *)
+module Make : Formula_type =
   struct
 
     module SetL = Set.Make(L)
@@ -12,21 +12,21 @@ module Make : Sigs.Formula_type =
     type literal_state = True | False | Undefined
 
     (** Information sur les clauses. Le tableau contient pour chaque clause :
-        - Le nombre de litéraux qui rendent cette clause vrai
-        - L'ensemble des litéraux dont la valeur est déjà fixée
-        - L'ensemble des litéraux dont la valeur n'est pas encore déterminée *)
+        - Le nombre de literaux qui rendent cette clause vrai
+        - L'ensemble des literaux dont la valeur est deja fixee
+        - L'ensemble des literaux dont la valeur n'est pas encore determinee *)
     type t_clauses = (int * SetL.t * SetL.t) Vector.vector
 
-    (** Information sur les litéraux. Le tableau contient pour chaque litéral :
-        - L'état actuel du litéral
-        - Le nombre de clauses non satisfaites dans lequel apparait le litéral
-        - La liste des clauses dans lesquelles le litéral apparait *)
+    (** Information sur les literaux. Le tableau contient pour chaque literal :
+        - L'etat actuel du literal
+        - Le nombre de clauses non satisfaites dans lequel apparait le literal
+        - La liste des clauses dans lesquelles le literal apparait *)
     type t_literals = (literal_state * int * int list) array
 
     (** Type d'une formule *)
     type t = t_clauses * t_literals
 
-    (** Construit une formule (de type t) à partir d'un élément de type Sigs.cnf *)
+    (** Construit une formule (de type t) a partir d'un element de type cnf *)
     let make out (nb_vars, nb_clauses, clauses) =
       let tabLiterals = Array.make (2*nb_vars) (Undefined, 0, []) in
       let tabClauses = Vector.make nb_clauses (0, SetL.empty, SetL.empty) in
@@ -43,7 +43,7 @@ module Make : Sigs.Formula_type =
     (** Renvoie le nombre de variables dans la formule *)
     let getNbVariables (_, tabLiterals) = (Array.length tabLiterals) / 2
     
-    (** Ajoute une clause à la formule (apprentissage) *)
+    (** Ajoute une clause a la formule (apprentissage) *)
     let addClause cl formula =
       let (tabClauses, tabLiterals) = formula in
       let n = Vector.length tabClauses in
@@ -58,7 +58,7 @@ module Make : Sigs.Formula_type =
            | False -> (a, SetL.add x u, v)) (0, SetL.empty, SetL.empty) cl);
       n (* On retourne l'identifiant de la nouvelle clause *)
     
-    (** Affiche la formule et divers informations associées sur la sortie out *)
+    (** Affiche la formule et divers informations associees sur la sortie out *)
     let print out formula = 
       let (tabClauses, tabLiterals) = formula in
       Vector.iter (fun (n,u,v)->
@@ -68,7 +68,7 @@ module Make : Sigs.Formula_type =
           SetL.iter (fun x -> output_string out " "; L.print out x) v;
           output_string out "\n") tabClauses
 
-    (** Ajoute à la formule l'hypothèse que le litéral x soit vrai *)
+    (** Ajoute a la formule l'hypothese que le literal x soit vrai *)
     let setLiteral x formula = 
       let (tabClauses, tabLiterals) = formula in
       let decr z =
@@ -89,7 +89,7 @@ module Make : Sigs.Formula_type =
           Vector.set tabClauses i (n, SetL.add (L.neg x) u, SetL.remove (L.neg x) v);
           decr (L.neg x)) lst2
 
-    (** Oublie l'hypothèse faite sur le litéral x dans la formule *)
+    (** Oublie l'hypothese faite sur le literal x dans la formule *)
     let forgetLiteral x formula = 
       let (tabClauses, tabLiterals) = formula in
       let incr z =
@@ -109,12 +109,12 @@ module Make : Sigs.Formula_type =
           Vector.set tabClauses i (n, SetL.remove (L.neg x) u, SetL.add (L.neg x) v);
           incr (L.neg x)) lst2
 
-    (** Renvoie vrai si la formule contient une contradiction triviale sous les hypothèses actuelles *)
+    (** Renvoie vrai si la formule contient une contradiction triviale sous les hypotheses actuelles *)
     let isFalse formula = 
       let (tabClauses, _) = formula in
       Vector.fold_left (fun b (n,_,u) -> b || (n = 0 && u = SetL.empty)) false tabClauses 
     
-    (** Renvoie un litéral contenu dans une clause unitaire (sous les hypothèses actuelles) *)
+    (** Renvoie un literal contenu dans une clause unitaire (sous les hypotheses actuelles) *)
     let getUnitClause (tabClauses,_) =
       let res = ref None in
       for i=0 to (Vector.length tabClauses) - 1 do
@@ -129,7 +129,7 @@ module Make : Sigs.Formula_type =
       let _, s1, s2 = Vector.get tabClauses i in
       SetL.fold (fun x l -> x::l) s1 (SetL.fold (fun x l -> x::l) s2 [])
     
-    (** Renvoie la clause responsable d'une éventuelle contradiction *)
+    (** Renvoie la clause responsable d'une eventuelle contradiction *)
     let getConflict formula =
       let (tabClauses, _) = formula in
       try Some (getClause formula (Vector.find (fun (n,_,u) -> n = 0 && u = SetL.empty) tabClauses))

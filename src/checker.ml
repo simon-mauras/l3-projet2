@@ -1,9 +1,11 @@
-(** Module permetant de vérifier que l'entrée est valide *)
+(** Module permetant de verifier que l'entree est valide *)
+
+open Sigs
 
 (** Affiche sur la sorte founie les messages d'erreur et retourne une formule valide *)
-let check out (nb_vars, nb_clauses, clauses) =
+let check out (nb_vars, nb_clauses, clauses : cnf) : cnf =
 
-  (* Vérifie que les variables sont bien numérotées entre 1 et nb_vars *)
+  (* Verifie que les variables sont bien numerotees entre 1 et nb_vars *)
   let max0 x = abs x in
   let rec max1 = function
     | [] -> 0 | x::l -> max (max0 x) (max1 l) in
@@ -14,7 +16,7 @@ let check out (nb_vars, nb_clauses, clauses) =
   if max_vars > nb_vars
   then Printf.fprintf out "Warning: variable ids are expected to be between 1 and %d (X%d found).\n" nb_vars v;
 
-  (* Vérifie que le  nombre de clauses est correct *)
+  (* Verifie que le  nombre de clauses est correct *)
   let c = List.length clauses in
   if c <> nb_clauses
   then Printf.fprintf out "Warning: wrong number of clauses (%d found, %d expected).\n" c nb_clauses;

@@ -16,3 +16,6 @@ prof:
 
 clean:
 	$(CC) -clean
+
+doc:
+	$(CC) $(CFLAGS) manual.docdir/index.html

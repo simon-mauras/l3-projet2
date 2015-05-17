@@ -1,5 +1,8 @@
+(** Module implementant la transformation de tseitin *)
+
 open Sigs
 
+(** Foncteur prenant en parametre un module permettant de manipuler les atomes de la theorie utilisee *)
 module Make =
   functor (S : Map.OrderedType) ->
   struct
@@ -26,7 +29,7 @@ module Make =
       let tab = Array.make (!leaf + !node + 1) None in
       ignore (MapS.iter (fun x i -> tab.(i) <- Some x) map);
       
-      (* Puis on génère une formule cnf *)
+      (* Puis on genere une formule cnf *)
       node := !leaf;
       let build_form x =
         let rec aux l0 = function

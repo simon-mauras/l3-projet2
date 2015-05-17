@@ -1,4 +1,4 @@
-(** Module permettant de manipuler les litéraux *)
+(** Module permettant de manipuler les literaux *)
 
 (** Module de type Literal_type *)
 module Make =
@@ -7,31 +7,31 @@ struct
   (** Type d'un literal *)
   type t = int
 
-  (** Construit un litéral (de type t) à partir d'un entier (Format DIMACS CNF) *)
+  (** Construit un literal (de type t) a partir d'un entier (Format DIMACS CNF) *)
   let make x = x
 
-  (** Renvoie un entier représentant le litéral (au format DIMACS CNF) *)
+  (** Renvoie un entier representant le literal (au format DIMACS CNF) *)
   let to_int x = x
 
-  (** Affiche un litéral sur la sortie out *)
+  (** Affiche un literal sur la sortie out *)
   let print out x =
     if x > 0 
     then Printf.fprintf out "X(%d)" x
     else Printf.fprintf out "Xbar(%d)" (-x)
 
-  (** Fonction de comparaison entre deux litéraux (utile pour construire un Set de litéraux) *)
+  (** Fonction de comparaison entre deux literaux (utile pour construire un Set de literaux) *)
   let compare a b = a - b
 
-  (** Renvoi la négation d'un litéral *)
+  (** Renvoi la negation d'un literal *)
   let neg x = -x
 
-  (** Renvoie un identifiant associé au litéral (entier entre 0 et 2*nbVars-1 si les variables sont numérotées entre 1 et nbVars) *)
+  (** Renvoie un identifiant associe au literal (entier entre 0 et 2*nbVars-1 si les variables sont numerotees entre 1 et nbVars) *)
   let id_of_literal x =
     if x > 0 
     then 2*(x-1)
     else 2*(-x-1) + 1
 
-  (** Renvoie le litéral associé à un identifiant donné *)
+  (** Renvoie le literal associe a un identifiant donne *)
   let literal_of_id n =
     if n mod 2 = 0
     then (1+n/2)

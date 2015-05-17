@@ -1,12 +1,12 @@
-(** Module implémentant la theorie de la congruence *)
+(** Module implementant la theorie de la congruence *)
 
-module L = Sigs.Literal
+open Sigs
 
-(** Module de type Sigs.Theory_type *)
-module Make : Sigs.Theory_type =
+(** Module de type Theory_type *)
+module Make : Theory_type =
   struct
     
-    (** Module représentant un terme de la théorie de la congruence *)
+    (** Module representant un terme de la theorie de la congruence *)
     module T =
       struct
       
@@ -19,7 +19,7 @@ module Make : Sigs.Theory_type =
         | Neq (a, b) -> Eq (a, b)
         
         let make x =
-          let module S = Sigs.Data.Congruence in
+          let module S = Data.Congruence in
           let rec aux_atom = function
           | S.X s -> X s
           | S.Fun (s, l) -> Fun (s, List.map aux_atom l) in
@@ -27,14 +27,14 @@ module Make : Sigs.Theory_type =
           | S.Eq (a, b) -> Eq (aux_atom a, aux_atom b)
           | S.Neq (a, b) -> Neq (aux_atom a, aux_atom b) in
           let aux_parsing = function
-          | Sigs.Parsing_congruence a -> aux_term a
+          | Parsing_congruence a -> aux_term a
           | _ -> failwith "Wrong parser" in
           let rec aux_formula = function
-          | Sigs.And(a, b) -> Sigs.And(aux_formula a, aux_formula b)
-          | Sigs.Or(a, b) -> Sigs.Or(aux_formula a, aux_formula b)
-          | Sigs.Imp(a, b) -> Sigs.Imp(aux_formula a, aux_formula b)
-          | Sigs.Not(a) -> Sigs.Not(aux_formula a)
-          | Sigs.Atom(a) -> Sigs.Atom(aux_parsing a) in
+          | And(a, b) -> And(aux_formula a, aux_formula b)
+          | Or(a, b) -> Or(aux_formula a, aux_formula b)
+          | Imp(a, b) -> Imp(aux_formula a, aux_formula b)
+          | Not(a) -> Not(aux_formula a)
+          | Atom(a) -> Atom(aux_parsing a) in
           aux_formula x
           
         let compare = Pervasives.compare
@@ -76,7 +76,7 @@ module Make : Sigs.Theory_type =
       remove [] (List.sort cmp l)
     
     (** Un ensemble de contraintes vide *)
-    let make tab =
+    let make tab : t =
     
       let nbLiterals = (2 * Array.length tab) - 2 in
       let tabLiterals = Array.make nbLiterals None in
@@ -122,7 +122,7 @@ module Make : Sigs.Theory_type =
     
         
     (** Ajoute une contrainte *)
-    let setConstraint lit (tabLiterals, (mapVars, tabVars, useLists), (find, cause, size, equality), disequality) =
+    let setConstraint lit (tabLiterals, (mapVars, tabVars, useLists), (find, cause, size, equality), disequality : t) =
       let idLit = L.id_of_literal lit in
       
       let rec root i =
@@ -159,7 +159,7 @@ module Make : Sigs.Theory_type =
               else aux (((x1, i1)::l1),l2) in
           let aSigs = List.sort cmp (List.map signature useLists.(u)) in
           let bSigs = List.sort cmp (List.map signature useLists.(v)) in
-          aux (aSigs,bSigs) 
+          aux (aSigs, bSigs) 
         end in
       
       match tabLiterals.(idLit) with
@@ -174,7 +174,7 @@ module Make : Sigs.Theory_type =
       | None -> ()
     
     (** Oublie une contrainte *)
-    let forgetConstraint lit (tabLiterals, (mapVars, tabVars, useLists), (find, cause, size, equality), disequality) =
+    let forgetConstraint lit (tabLiterals, (mapVars, tabVars, useLists), (find, cause, size, equality), disequality : t) =
       let idLit = L.id_of_literal lit in
       match tabLiterals.(idLit) with
       | Some x -> begin
@@ -190,7 +190,7 @@ module Make : Sigs.Theory_type =
       | None -> ()
     
     (** Renvoie une eventuelle contradiction entre les contraintes actuelles *)
-    let getContradiction (tabLiterals, (mapVars, tabVars, useLists), (find, cause, size, equality), disequality) =
+    let getContradiction (tabLiterals, (mapVars, tabVars, useLists), (find, cause, size, equality), disequality : t) =
     
       let rec root i =
         if i <> find.(i)

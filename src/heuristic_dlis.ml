@@ -1,34 +1,34 @@
 (** Module implementant le choix du prochain paris *)
 
-module L = Sigs.Literal
+open Sigs
 
-(** Module de type Sigs.Heuristic_type *)
-module Make : Sigs.Heuristic_type =
+(** Module de type Heuristic_type *)
+module Make : Heuristic_type =
   struct
   
   type state = True | False | Undefined
   
   type t = L.t list list ref * state array
   
-  let make out (nb_vars, nb_clauses, clauses) =
+  let make (out : out_channel) (nb_vars, nb_clauses, clauses : cnf) : t =
     let tabStates = Array.make (2*nb_vars) Undefined in
     let lstClauses = List.map (List.map L.make) clauses in
     (ref lstClauses, tabStates)
   
-  let addClause cl (lstClauses, tabStates) =
+  let addClause cl ((lstClauses, tabStates) : t) =
     lstClauses := cl :: !lstClauses
     
-  let print out (lstClauses, tabStates) = ()
+  let print (out : out_channel) (lstClauses, tabStates : t) = ()
   
-  let setLiteral x (lstClauses, tabStates) =
+  let setLiteral x ((lstClauses, tabStates) : t) =
     tabStates.(L.id_of_literal x) <- True;
     tabStates.(L.id_of_literal (L.neg x)) <- False
     
-  let forgetLiteral x (lstClauses, tabStates) =
+  let forgetLiteral x (lstClauses, tabStates : t) =
     tabStates.(L.id_of_literal x) <- Undefined;
     tabStates.(L.id_of_literal (L.neg x)) <- Undefined
   
-  let getNextLiteral (lstClauses, tabStates) =
+  let getNextLiteral (lstClauses, tabStates : t) =
     let tabScores = Array.make (Array.length tabStates) 0. in
     List.iter (fun cl ->
                let act = List.fold_left
