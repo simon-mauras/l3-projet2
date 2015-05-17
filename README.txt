@@ -69,7 +69,13 @@ nano tests.sh # Ligne 5 : Par défaut le script utilise les options -wl -cl
 *                                                       *
 *********************************************************
 
-TODO
+Nous avons tracé différents graphes. Dans un premier temps nous avons testé
+les options -cl et -wl sur des "petits" tests. La version la plus rapide étant
+de loin -wl -cl, nous avons testé ensuite les heuristiques sur des tests plus
+conséquents avec les litéraux surveillés et l'apprentissage de clause activés.
+
+Pour tracer les courbes nous avons utilisé python3, numpy et matlibplot.
+Il est possible de les tracer en lancant le script tests/benchmark.sh
 
 
 *********************************************************
