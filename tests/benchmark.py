@@ -5,7 +5,7 @@ import numpy
 
 options = ["-cl", "-wl", "-cl -wl"]
 heuristics = ["-dlis", "-vsids", "-moms", "-rand"]
-reps = 3
+reps = 10
 
 
 def bench(cmd_params):
